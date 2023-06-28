@@ -1,25 +1,44 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { LoadingOutlined } from "@ant-design/icons";
+import { Suspense } from "react";
+import {
+  BrowserRouter as Router,
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
+import "./App.css";
+import LayoutDefault from "./components/layouts/DefaultLayout";
+// import PrivateRoute from './components/PrivateRoute';
+// import CourseDetail from './pages/courseDetail';
+// import LoginPages from './pages/login';
+import routes from "./pages/routes";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Suspense fallback={<LoadingOutlined />}>
+        <Routes>
+          {/* <Route path="/" element={<PrivateRoute />}> */}
+          {routes.map(
+            ({ component: Component, path, label, ...rest }, index) => {
+              return (
+                <Route
+                  element={
+                    <LayoutDefault>
+                      <Component />
+                    </LayoutDefault>
+                  }
+                  key={index}
+                  path={path}
+                  {...rest}
+                />
+              );
+            }
+          )}
+          {/* </Route> */}
+        </Routes>
+      </Suspense>
+    </Router>
   );
 }
 
