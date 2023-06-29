@@ -2,22 +2,15 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../../redux/store";
 import { Film } from "../../models/film";
-import {
-  apiGetAllFilm,
-  apiGetFilmById,
-  apiSearchFilm,
-  apiUpdateFilm,
-} from "../../api/filmApi";
+import { apiGetAllFilm, apiGetFilmByStatus } from "../../api/filmApi";
 
-// Define a type for the slice state
 interface FilmState {
-  // categorys: Category[],
-  // loading: boolean,
-  // error: string,
-  // categoryInfo: Category | null
+  films: Film[],
+  loading: boolean,
+  error: string,
+  categoryInfo: Film | null
 }
 
-// Define the initial state using that type
 const initialState: FilmState = {
   films: [],
   loading: false,
@@ -25,73 +18,61 @@ const initialState: FilmState = {
   categoryInfo: null,
 };
 
-// export const requestLoadCategorys = createAsyncThunk('category/loadCategorys', async (props: { status: number }) => {
-//   const res = await apiLoadCategorys(props);
-//   return res.data
-// })
+export const requestLoadFilms = createAsyncThunk('film/loadFilms', async (props: {
+  skip?: number;
+  limit?: number;
+}) => {
+  const res = await apiGetAllFilm(props);
+  return res.data
+})
 
-// export const requestUpdateCategorys = createAsyncThunk('category/updateCategorys', async (props: Category) => {
-//   const res = await apiUpdateCategory(props);
-//   return res.data
-// })
 
-// export const requestOrderCategory = createAsyncThunk('category/orderCategory', async (props: {
-//   indexRange :any,
-//   status : number
-// }) => {
-//   const res = await apiOrderCategory(props);
-//   return res.data
-// })
+export const requestLoadFilmsByStatus = createAsyncThunk('film/loadFilmsByStatus', async (props: {
+  status: number
+}) => {
+  const res = await apiGetFilmByStatus(props);
+  return res.data
+})
 
-export const categorySlice = createSlice({
-  name: "category",
-  // `createSlice` will infer the state type from the `initialState` argument
+
+export const filmSlice = createSlice({
+  name: "film",
   initialState,
-  reducers: {
-    setCategoryInfo: (state, action) => {
-      // state.categoryInfo = action.payload
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
-    // const actionList = [requestLoadCategorys, requestUpdateCategorys];
-    // actionList.forEach(action => {
-    //   builder.addCase(action.pending, (state) => {
-    //     state.loading = true;
-    //   })
-    // })
-    // actionList.forEach(action => {
-    //   builder.addCase(action.rejected, (state) => {
-    //     state.loading = false;
-    //   })
-    // })
-    // load
-    // builder.addCase(requestLoadCategorys.fulfilled, (state, action: PayloadAction<{
-    //   data: Category[],
-    //   status: number
-    // }>) => {
-    //   state.loading = false;
-    //   state.categorys = action.payload.data.map((o) => new Category(o));
-    // })
-    // // order category
-    // // builder.addCase(requestOrderCategory.fulfilled, (state, action: PayloadAction<{
-    // //   data: Category[],
-    // //   status: number
-    // // }>) => {
-    // //   state.loading = false;
-    // // })
-    // builder.addCase(requestUpdateCategorys.fulfilled, (state, action: PayloadAction<{
-    //   data: Category,
-    //   status: number
-    // }>) => {
-    //   state.loading = false;
-    //   state.categoryInfo = new Category(action.payload.data)
-    // })
+    const actionList = [requestLoadFilms, requestLoadFilmsByStatus];
+    actionList.forEach(action => {
+      builder.addCase(action.pending, (state) => {
+        state.loading = true;
+      })
+    })
+    actionList.forEach(action => {
+      builder.addCase(action.rejected, (state) => {
+        state.loading = false;
+      })
+    })
+
+    builder.addCase(requestLoadFilms.fulfilled, (state, action: PayloadAction<{
+      data: Film[],
+      status: number
+    }>) => {
+      state.loading = false;
+      state.films = action.payload.data.map((o) => new Film(o));
+    })
+
+    builder.addCase(requestLoadFilmsByStatus.fulfilled, (state, action: PayloadAction<{
+      data: Film[],
+      status: number
+    }>) => {
+      state.loading = false;
+      state.films = action.payload.data.map((o) => new Film(o));
+    })
   },
 });
 
-export const { setCategoryInfo } = categorySlice.actions;
+export const { } = filmSlice.actions;
 
 // Other code such as selectors can use the imported `RootState` type
-export const categoryState = (state: RootState) => state.category;
+export const filmState = (state: RootState) => state.film;
 
-export default categorySlice.reducer;
+export default filmSlice.reducer;

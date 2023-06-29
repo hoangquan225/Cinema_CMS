@@ -8,6 +8,9 @@ export default class ENDPONTAPI {
   static GET_ALL_FILM = '/film/get-all-film';
   static GET_FILM_BY_ID = '/film/get-film-by-id';
   static SEARCH_FILM = '/film/search-film';
+  static GET_FILM_BY_STATUS = '/film/get-film-by-status';
+  static GET_FILM_BY_CATEGORY = '/film/get-film-by-category';
+  static AUTO_UPDATE_STATUS_FILM = '/film/auto-update-status-film';
 
   //User
   static UPDATE_USER = '/user/update-user';
@@ -20,7 +23,7 @@ export default class ENDPONTAPI {
 
   //ticket
   static CREATE_TICKET = '/ticket/create-ticket';
-  static GET_TICKET_BY_FILM_OR_DATE = '/ticket/get-ticket-by-film-or-date';
+  static GET_ALL_TICKET = '/ticket/get-all-ticket';
   static GET_SEAT_OF_SCHEDULE_BY_TICKET =
     '/ticket/get-seat-of-schedule-by-ticket';
   //upload

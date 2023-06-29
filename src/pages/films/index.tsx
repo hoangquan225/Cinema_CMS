@@ -1,29 +1,118 @@
-import { Button, Col, Form, Input, Modal, Row, Select, Typography } from "antd";
+import { Button, Col, Form, Image, Input, Modal, Popconfirm, Row, Select, Space, Tag, Tooltip, Typography, notification } from "antd";
 import { useForm } from "antd/es/form/Form";
 import TextArea from "antd/es/input/TextArea";
 import UploadImg from "../../components/UploadImg";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { apiGetAllFilm } from "../../api/filmApi";
+import { Film } from "../../models/film";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import Table, { ColumnsType } from "antd/es/table";
+import classNames from "classnames/bind";
+import styles from "./films.module.scss";
+import moment from "moment";
+import { useAppDispatch, useAppSelector } from "../../redux/hook";
+import { filmState, requestLoadFilms, requestLoadFilmsByStatus } from "./filmsSlide";
+import { unwrapResult } from "@reduxjs/toolkit";
+
+const cx = classNames.bind(styles);
+
+interface DataType {
+  key: string;
+  name: string;
+  thumbnail: string;
+  director: string[];
+  status: number;
+  startTime: number;
+  endTime: number;
+  value: Film;
+}
+
+export const FilmsStatus = [
+  {
+    value: 1,
+    label: "GOING_ON",
+  },
+  {
+    value: 2,
+    label: "COMING",
+  },
+  {
+    value: 3,
+    label: "FINISH",
+  },
+];
 
 const Films = () => {
   const [form] = useForm();
+  const dispatch = useAppDispatch();
+  const filmReducer = useAppSelector(filmState)
+  const films = filmReducer.films;
+  const loading = filmReducer.loading;
+  
   const [dataUpload, setDataupload] = useState<string | null>();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [data, setData] = useState();
+  const [datas, setDatas] = useState<DataType[]>([]);
+  const [isEdit, setIsEdit] = useState<boolean>(false);
+  const [valueEdit, setValueEdit] = useState<Film | undefined>();
+  const [statusFilm, setStatusFilm] = useState<number>(-2);
+
   const openCreateModal = () => {
     setIsModalOpen(true);
-    // setValueEdit(undefined);
-    // setIsEdit(false);
+    setValueEdit(undefined);
+    setIsEdit(false);
   };
 
-  const onTest = async () => {
-    try {
-      console.log("onTest");
+  useEffect(() => {
+    setDatas(films?.map(o => convertDataToTable(o)))
+  }, [films])
+  console.log(films);
 
-      const res = await apiGetAllFilm();
-      console.log(res.data);
+  const convertDataToTable = (value: Film) => {
+    return {
+      key: `${value?.id || Math.random()}`,
+      name: value?.name,
+      thumbnail: value?.thumbnail,
+      director: value?.director,
+      status: value?.status,
+      startTime: value?.startTime,
+      endTime: value?.endTime,
+      value: value,
+    };
+  };
+
+  useEffect(() => {
+    if (statusFilm !== -2) {
+      loadFilmsByStatus(statusFilm);
+    } else {
+      loadAllFilms();
+    }
+  }, [statusFilm]);
+
+  const loadAllFilms = async () => {
+    try {
+      const actionResult = await dispatch(
+        requestLoadFilms({limit: 100, skip:0})
+      );
+      unwrapResult(actionResult);
     } catch (error) {
-      console.log(error);
+      notification.error({
+        message: "không tải được danh sách phim",
+      });
+    }
+  };
+  
+  const loadFilmsByStatus = async (status: number) => {
+    try {
+      const actionResult = await dispatch(
+        requestLoadFilmsByStatus({
+          status
+        })
+      );
+      unwrapResult(actionResult);
+    } catch (error) {
+      notification.error({
+        message: "không tải được danh sach danh mục",
+      });
     }
   };
 
@@ -32,96 +121,146 @@ const Films = () => {
     form.resetFields();
   };
 
-  // const columns: ColumnsType<DataType> = [
-  //   {
-  //     title: "STT",
-  //     key: "stt",
-  //     align: "center",
-  //     render: (text, record, index) => index + 1,
-  //   },
-  //   {
-  //     title: "Ảnh",
-  //     dataIndex: "avatar",
-  //     key: "avatar",
-  //     align: "center",
-  //     render: (text) => (
-  //       <Image
-  //         src={text}
-  //         width={150}
-  //         preview={false}
-  //         style={{
-  //           maxHeight: "80px",
-  //           overflow: "hidden",
-  //         }}
-  //       />
-  //     ),
-  //   },
-  //   {
-  //     title: "Tên danh mục",
-  //     dataIndex: "name",
-  //     key: "name",
-  //     align: "center",
-  //     render: (text) => <span>{text}</span>,
-  //   },
-  //   {
-  //     title: "Đường dẫn",
-  //     dataIndex: "slug",
-  //     key: "slug",
-  //     align: "center",
-  //     render: (text) => <span>{text}</span>,
-  //   },
-  //   {
-  //     title: "Trạng thái",
-  //     key: "status",
-  //     dataIndex: "status",
-  //     align: "center",
-  //     render: (text: number) => (
-  //       <>
-  //         <Tag color={text === TTCSconfig.STATUS_PUBLIC ? "green" : "red"}>
-  //           {STATUSES.find((o) => o.value === text)?.label}
-  //         </Tag>
-  //       </>
-  //     ),
-  //   },
-  //   {
-  //     title: "Hành động",
-  //     key: "action",
-  //     dataIndex: "value",
-  //     align: "center",
-  //     render: (text: Category, record) => (
-  //       <Space size="middle">
-  //         <Tooltip placement="top" title="Chỉnh sửa">
-  //           <Button
-  //             onClick={() => {
-  //               setIsModalOpen(true);
-  //               setValueEdit(text);
-  //               setIsEdit(true);
-  //             }}
-  //           >
-  //             <EditOutlined />
-  //           </Button>
-  //         </Tooltip>
-  //         {statusCategory !== TTCSconfig.STATUS_DELETED && (
-  //           <Popconfirm
-  //             placement="topRight"
-  //             title="Bạn có chắc bạn muốn xóa mục này không?"
-  //             onConfirm={() => {
-  //               handleDelete(text);
-  //             }}
-  //             okText="Yes"
-  //             cancelText="No"
-  //           >
-  //             <Tooltip placement="top" title="Xóa">
-  //               <Button>
-  //                 <DeleteOutlined />
-  //               </Button>
-  //             </Tooltip>
-  //           </Popconfirm>
-  //         )}
-  //       </Space>
-  //     ),
-  //   },
-  // ];
+  const handleDelete = async (value: Film) => {
+    try {
+      // const data = await dispatch(
+      //   requestUpdateCategorys({
+      //     ...value,
+      //     status: TTCSconfig.STATUS_DELETED,
+      //   })
+      // );
+      // unwrapResult(data);
+      // dispatch(
+      //   requestLoadCategorys({
+      //     status: statusCategory,
+      //   })
+      // );
+      notification.success({
+        message: "Xoá thành công",
+        duration: 1.5,
+      });
+    } catch (error) {
+      notification.error({
+        message: "cập nhật không được",
+        duration: 1.5,
+      });
+    }
+  };
+
+  const columns: ColumnsType<DataType> = [
+    {
+      title: "STT",
+      key: "stt",
+      align: "center",
+      render: (text, record, index) => index + 1,
+    },
+    {
+      title: "Ảnh",
+      dataIndex: "thumbnail",
+      key: "thumbnail",
+      align: "center",
+      render: (text) => (
+        <Image
+          src={text}
+          width={150}
+          preview={false}
+          style={{
+            width: "50%",
+            overflow: "hidden",
+          }}
+        />
+      ),
+    },
+    {
+      title: "Tên",
+      dataIndex: "name",
+      key: "name",
+      align: "center",
+      render: (text) => <span>{text}</span>,
+    },
+    {
+      title: "Đạo diễn",
+      dataIndex: "director",
+      key: "director",
+      align: "center",
+      render: (text) => <span>{text}</span>,
+    },
+    {
+      title: "Trạng thái",
+      key: "status",
+      dataIndex: "status",
+      align: "center",
+      render: (text: number) => (
+        <>
+          <Tag color={text === 1 ? "green" : text === 2 ? "yellow" : "red"}>
+            {FilmsStatus.find((o) => o.value === text)?.label}
+          </Tag>
+        </>
+      ),
+    },
+    {
+      title: "Ngày chiếu",
+      key: "startTime",
+      dataIndex: "startTime",
+      align: "center",
+      render: (text: number) => (
+        <>
+          <Tag>
+            {moment(text).format("MMM Do YYYY")}
+          </Tag>
+        </>
+      ),
+    },
+    {
+      title: "Ngày kết thúc",
+      key: "endTime",
+      dataIndex: "endTime",
+      align: "center",
+      render: (text: number) => (
+        <>
+          <Tag>
+            {moment(text).format("MMM Do YYYY")}
+          </Tag>
+        </>
+      ),
+    },
+    {
+      title: "Hành động",
+      key: "action",
+      dataIndex: "value",
+      align: "center",
+      render: (text: Film, record) => (
+        <Space size="middle">
+          <Tooltip placement="top" title="Chỉnh sửa">
+            <Button
+              onClick={() => {
+                setIsModalOpen(true);
+                setValueEdit(text);
+                setIsEdit(true);
+              }}
+            >
+              <EditOutlined />
+            </Button>
+          </Tooltip>
+          <Popconfirm
+            placement="topRight"
+            title="Bạn có chắc bạn muốn xóa mục này không?"
+            onConfirm={() => {
+              handleDelete(text);
+            }}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Tooltip placement="top" title="Xóa">
+              <Button>
+                <DeleteOutlined />
+              </Button>
+            </Tooltip>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
 
   return (
     <div>
@@ -129,11 +268,24 @@ const Films = () => {
         Thêm mới
       </Button>
 
-      <Button type="primary" onClick={onTest}>
-        Thêm mới
-      </Button>
+      <Typography.Title level={3}>Danh sách phim: </Typography.Title>
 
-      <Typography.Title level={3}>Danh sách danh mục: </Typography.Title>
+      <Table
+        className={cx("course__table")}
+        columns={columns}
+        dataSource={datas}
+        loading={loading} 
+        pagination={{
+          pageSize: 10
+        }}
+        // onRow={(record, rowIndex) => {
+        //   return {
+        //     onDoubleClick: (event) => {
+        //       navigate(`chi-tiet-khoa-hoc/${record.value.id}`)
+        //     },
+        //   };
+        // }}
+      />  
 
       <Modal
         // title={`${isEdit ? "Chỉnh sửa" : "Tạo"}  khóa học`}

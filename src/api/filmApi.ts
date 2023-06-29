@@ -29,8 +29,16 @@ export const apiGetFilmById = async (params: { id: string }) => {
     ENDPONTAPI.GET_FILM_BY_ID,
     {
       params,
-    },
-    "GET"
+    }
+  );
+};
+
+export const apiGetFilmByStatus = async (params: { status: number }) => {
+  return ApiConfig(
+    ENDPONTAPI.GET_FILM_BY_STATUS,
+    {
+      params
+    }
   );
 };
 

@@ -2,24 +2,22 @@ import AppConfig from '../common/config';
 
 class Film {
   id?: string | undefined;
-  name: string; //
+  name: string;
   slug?: string;
-  description: string;//
+  description: string;
   content: string;
-  videoUrl: string;//
-  thumbnail: string;//
-  category: number[];//
+  videoUrl: string;
+  thumbnail: string;
+  category: string[];
   director: string[]; // Đạo diễn
-  actor: string[];//
-  language: string;//
-  startTime: number;//
-  endTime: number;//
+  actor: string[];
+  language: string;
+  startTime: number;
+  endTime: number;
   heartTotal?: number;
-  status: number;//
-  runningTime: number;//
-  schedule?: {
-    [date: number]: [number];//
-  };
+  status: number;
+  runningTime: number;
+  schedule?: [string];
 
   constructor(args?: any) {
     if (!args) {
@@ -41,7 +39,7 @@ class Film {
     this.endTime = args?.endTime ?? 0;
     this.heartTotal = args?.heartTotal ?? 0;
     this.status = args?.status ?? AppConfig.FilmsStatus.DRAFT;
-    this.schedule = args?.schedule ?? {};
+    this.schedule = args?.schedule ?? [];
   }
 }
 
