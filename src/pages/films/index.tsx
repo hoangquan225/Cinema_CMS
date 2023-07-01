@@ -3,15 +3,14 @@ import { useForm } from "antd/es/form/Form";
 import TextArea from "antd/es/input/TextArea";
 import UploadImg from "../../components/UploadImg";
 import { useState, useEffect } from "react";
-import { apiGetAllFilm } from "../../api/filmApi";
 import { Film } from "../../models/film";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import Table, { ColumnsType } from "antd/es/table";
 import classNames from "classnames/bind";
 import styles from "./films.module.scss";
-import moment, { Moment } from "moment";
+import moment from "moment";
 import { useAppDispatch, useAppSelector } from "../../redux/hook";
-import { filmState, requestLoadFilms, requestLoadFilmsByStatus, requestUpdateFilm } from "./filmsSlide";
+import { filmState, requestLoadFilms, requestUpdateFilm } from "./filmsSlide";
 import { unwrapResult } from "@reduxjs/toolkit";
 import AppConfig from "../../common/config";
 import dayjs from "dayjs";
@@ -56,12 +55,17 @@ const Films = () => {
   const loading = filmReducer.loading;
 
   const [dataUpload, setDataupload] = useState<string | null>();
-  const [startEndTime, setStartEndTime] = useState<{startTime: number, endTime: number}>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [datas, setDatas] = useState<DataType[]>([]);
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [valueEdit, setValueEdit] = useState<Film | undefined>();
   const [statusFilm, setStatusFilm] = useState<number>(-2);
+
+  const [sche, setSche] = useState<{
+    index: number,
+    time: number
+  }[]>([])
+
   const { RangePicker } = DatePicker;
 
   const openCreateModal = () => {
@@ -76,11 +80,17 @@ const Films = () => {
 
   useEffect(() => {
     if (valueEdit) {
-      const { name, description, videoUrl, thumbnail, category, director, actor, language, startTime, endTime, status, runningTime, schedule } = valueEdit;
-      form.setFieldsValue({ name, description, videoUrl, thumbnail, category, director, actor, language, status, runningTime, schedule });
-      setStartEndTime({startTime,endTime})
+      const { name, description, videoUrl, thumbnail, category, director, actor, language, status, runningTime, schedule } = valueEdit;
+      form.setFieldsValue({ name, description, videoUrl, thumbnail, category: category.join(","), director: director.join(","), actor: actor.join(","), language, status, runningTime, schedule });
+
+      const convertedSchedule = schedule?.map((time, index) => ({
+        time: Number(time),
+        index
+      }));
+      setSche(convertedSchedule || []);
     }
   }, [valueEdit]);
+
 
   const convertDataToTable = (value: Film) => {
     return {
@@ -103,15 +113,6 @@ const Films = () => {
     }
   }, [statusFilm]);
 
-  const onRangeChange = (dates: null | (any | null)[], dateStrings: string[]) => {
-    if (dates) {
-      console.log('From: ', dates[0], ', to: ', dates[1]);
-      console.log('From: ', dateStrings[0], ', to: ', dateStrings[1]);
-    } else {
-      console.log('Clear');
-    }
-  };
-
   const loadAllFilms = async (limit?: number, skip?: number, status?: number) => {
     try {
       const actionResult = await dispatch(
@@ -127,6 +128,8 @@ const Films = () => {
 
   const handleCancel = () => {
     setIsModalOpen(false);
+    setValueEdit(undefined);
+    setDataupload(null)
     form.resetFields();
   };
 
@@ -158,6 +161,54 @@ const Films = () => {
       });
     }
   };
+
+  const handleOk = () => {
+    form.validateFields().then(async (value) => {
+      const { startEndTime, actor, director, category, thumbnail } = value
+
+      const infoFilm = {
+        ...value,
+        startTime: startEndTime[0].valueOf(),
+        endTime: startEndTime[1].valueOf(),
+        actor: actor.split(","),
+        director: director.split(","),
+        category: category.split(","),
+        thumbnail: thumbnail || dataUpload
+      }
+      console.log({
+        id: valueEdit?.id,
+        ...valueEdit,
+        ...infoFilm
+      });
+
+      try {
+        const data = await dispatch(
+          requestUpdateFilm({
+            id: valueEdit?.id,
+            ...valueEdit,
+            ...infoFilm
+          })
+        );
+        unwrapResult(data);
+        if (statusFilm !== -2) {
+          loadAllFilms(100, 0, statusFilm);
+        } else {
+          loadAllFilms();
+        }
+        notification.success({
+          message: "Cập nhật thành công",
+          duration: 1.5,
+        });
+      } catch (error) {
+        notification.error({
+          message: "cập nhật không được",
+          duration: 1.5,
+        });
+      }
+      handleCancel();
+    });
+  };
+
 
   const columns: ColumnsType<DataType> = [
     {
@@ -313,7 +364,7 @@ const Films = () => {
       <Modal
         title={`${isEdit ? "Chỉnh sửa" : "Tạo"}  Phim`}
         open={isModalOpen}
-        // onOk={handleOk}
+        onOk={handleOk}
         onCancel={handleCancel}
         okText={`${isEdit ? "Cập nhật" : "Tạo"}`}
         cancelText="Hủy"
@@ -336,11 +387,20 @@ const Films = () => {
               xs={24}
               style={{ borderRight: "0.1px solid #ccc" }}
             >
-              <Form.Item label={<h3>{"Ảnh phim"}</h3>} name="thumbnail">
+              <Form.Item label={<h3>{"Ảnh phim"}</h3>}>
                 <UploadImg
-                  defaultUrl={valueEdit?.thumbnail}
-                  onChangeUrl={(value) => setDataupload(value)}
+                  defaultUrl={valueEdit?.thumbnail || dataUpload}
+                  onChangeUrl={(value) => {
+                    setDataupload(value)
+                    form.setFieldsValue({ thumbnail: value })
+                  }}
                 />
+              </Form.Item>
+              <Form.Item
+                label="Ảnh(URL)"
+                name="thumbnail">
+                <Input
+                  onChange={(e) => setDataupload(e.target.value)} />
               </Form.Item>
 
               <Form.Item
@@ -412,14 +472,31 @@ const Films = () => {
                 <Input />
               </Form.Item>
 
-
               <Form.Item
-                name="runningTime"
-                label="Thời lượng"
+                name="category"
+                label="Thể loại"
                 rules={[
                   {
                     required: true,
                     message: "Vui lòng nhập trường này!",
+                  },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+
+
+              <Form.Item
+                name="runningTime"
+                label="Thời lượng (phút)"
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập trường này!",
+                  },
+                  {
+                    pattern: /^\d+$/,
+                    message: "Vui lòng chỉ nhập số phút!",
                   },
                 ]}
               >
@@ -435,13 +512,15 @@ const Films = () => {
                     message: "Vui lòng nhập trường này!",
                   },
                 ]}
+
               >
                 <RangePicker
-                  defaultValue={[dayjs(startEndTime?.startTime), dayjs(startEndTime?.endTime)]}
-                  onChange={onRangeChange} />
+                  defaultValue={[dayjs(valueEdit?.startTime || undefined), dayjs(valueEdit?.endTime || undefined)]}
+                />
+
               </Form.Item>
 
-              <Form.Item
+              {/* <Form.Item
                 name="schedule"
                 label="Lịch chiếu"
                 rules={[
@@ -451,7 +530,44 @@ const Films = () => {
                   },
                 ]}
               >
-              </Form.Item>
+                <DatePicker
+                  format="YYYY-MM-DD HH:mm"
+                  showTime={{ defaultValue: dayjs('00:00:00', 'HH:mm') }}
+                />
+                <Button>+</Button>
+              </Form.Item> */}
+
+              {/* <Typography.Text >
+                Lịch chiếu
+              </Typography.Text>
+              {sche.map((data, index) =>
+                {
+                  console.log(data);
+                  
+                  return (<Form.Item
+                    name={`schedule-${index + 1}`}
+                    rules={[
+                      {
+                        required: true,
+                        message: "Vui lòng nhập trường này!",
+                      },
+                    ]}
+                  >
+                    <DatePicker
+                      format="YYYY-MM-DD HH:mm"
+                      defaultValue={dayjs(data.time, "YYYY-MM-DD HH:mm")}
+                      showTime={{ defaultValue: dayjs(data.time, "HH:mm") }}
+                    />
+                  </Form.Item>)
+                }
+              )} */}
+
+              <Form.Item><Button onClick={() => {
+                setSche([...sche, {
+                  index: sche.length,
+                  time: 0
+                }])
+              }}>thêm lịch</Button></Form.Item>
             </Col>
           </Row>
           <Row>
@@ -476,7 +592,7 @@ const Films = () => {
           </Row>
         </Form>
       </Modal>
-    </div>
+    </div >
   );
 };
 
