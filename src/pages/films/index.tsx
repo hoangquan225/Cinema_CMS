@@ -1,4 +1,4 @@
-import { Button, Col, Form, Image, Input, Modal, Popconfirm, Row, Select, Space, Tag, Tooltip, Typography, notification } from "antd";
+import { Button, Col, DatePicker, Form, Image, Input, Modal, Popconfirm, Row, Select, Space, Tag, Tooltip, Typography, notification } from "antd";
 import { useForm } from "antd/es/form/Form";
 import TextArea from "antd/es/input/TextArea";
 import UploadImg from "../../components/UploadImg";
@@ -9,10 +9,12 @@ import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import Table, { ColumnsType } from "antd/es/table";
 import classNames from "classnames/bind";
 import styles from "./films.module.scss";
-import moment from "moment";
+import moment, { Moment } from "moment";
 import { useAppDispatch, useAppSelector } from "../../redux/hook";
-import { filmState, requestLoadFilms, requestLoadFilmsByStatus } from "./filmsSlide";
+import { filmState, requestLoadFilms, requestLoadFilmsByStatus, requestUpdateFilm } from "./filmsSlide";
 import { unwrapResult } from "@reduxjs/toolkit";
+import AppConfig from "../../common/config";
+import dayjs from "dayjs";
 
 const cx = classNames.bind(styles);
 
@@ -40,6 +42,10 @@ export const FilmsStatus = [
     value: 3,
     label: "FINISH",
   },
+  {
+    value: -1,
+    label: "DELETED",
+  },
 ];
 
 const Films = () => {
@@ -48,13 +54,15 @@ const Films = () => {
   const filmReducer = useAppSelector(filmState)
   const films = filmReducer.films;
   const loading = filmReducer.loading;
-  
+
   const [dataUpload, setDataupload] = useState<string | null>();
+  const [startEndTime, setStartEndTime] = useState<{startTime: number, endTime: number}>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [datas, setDatas] = useState<DataType[]>([]);
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [valueEdit, setValueEdit] = useState<Film | undefined>();
   const [statusFilm, setStatusFilm] = useState<number>(-2);
+  const { RangePicker } = DatePicker;
 
   const openCreateModal = () => {
     setIsModalOpen(true);
@@ -65,7 +73,14 @@ const Films = () => {
   useEffect(() => {
     setDatas(films?.map(o => convertDataToTable(o)))
   }, [films])
-  console.log(films);
+
+  useEffect(() => {
+    if (valueEdit) {
+      const { name, description, videoUrl, thumbnail, category, director, actor, language, startTime, endTime, status, runningTime, schedule } = valueEdit;
+      form.setFieldsValue({ name, description, videoUrl, thumbnail, category, director, actor, language, status, runningTime, schedule });
+      setStartEndTime({startTime,endTime})
+    }
+  }, [valueEdit]);
 
   const convertDataToTable = (value: Film) => {
     return {
@@ -82,36 +97,30 @@ const Films = () => {
 
   useEffect(() => {
     if (statusFilm !== -2) {
-      loadFilmsByStatus(statusFilm);
+      loadAllFilms(100, 0, statusFilm);
     } else {
       loadAllFilms();
     }
   }, [statusFilm]);
 
-  const loadAllFilms = async () => {
+  const onRangeChange = (dates: null | (any | null)[], dateStrings: string[]) => {
+    if (dates) {
+      console.log('From: ', dates[0], ', to: ', dates[1]);
+      console.log('From: ', dateStrings[0], ', to: ', dateStrings[1]);
+    } else {
+      console.log('Clear');
+    }
+  };
+
+  const loadAllFilms = async (limit?: number, skip?: number, status?: number) => {
     try {
       const actionResult = await dispatch(
-        requestLoadFilms({limit: 100, skip:0})
+        requestLoadFilms({ limit: limit || 100, skip, status: status || undefined })
       );
       unwrapResult(actionResult);
     } catch (error) {
       notification.error({
         message: "không tải được danh sách phim",
-      });
-    }
-  };
-  
-  const loadFilmsByStatus = async (status: number) => {
-    try {
-      const actionResult = await dispatch(
-        requestLoadFilmsByStatus({
-          status
-        })
-      );
-      unwrapResult(actionResult);
-    } catch (error) {
-      notification.error({
-        message: "không tải được danh sach danh mục",
       });
     }
   };
@@ -123,18 +132,21 @@ const Films = () => {
 
   const handleDelete = async (value: Film) => {
     try {
-      // const data = await dispatch(
-      //   requestUpdateCategorys({
-      //     ...value,
-      //     status: TTCSconfig.STATUS_DELETED,
-      //   })
-      // );
-      // unwrapResult(data);
+      const data = await dispatch(
+        requestUpdateFilm({
+          ...value,
+          status: AppConfig.STATUS_DELETED,
+        })
+      );
+      unwrapResult(data);
       // dispatch(
-      //   requestLoadCategorys({
-      //     status: statusCategory,
-      //   })
+      //   requestLoadFilms({})
       // );
+      if (statusFilm !== -2) {
+        loadAllFilms(100, 0, statusFilm);
+      } else {
+        loadAllFilms();
+      }
       notification.success({
         message: "Xoá thành công",
         duration: 1.5,
@@ -264,9 +276,27 @@ const Films = () => {
 
   return (
     <div>
-      <Button type="primary" onClick={openCreateModal}>
-        Thêm mới
-      </Button>
+      <Space size="large">
+        <Button type="primary" onClick={openCreateModal}>
+          Thêm mới
+        </Button>
+
+        <Space size="small">
+          <label style={{ marginLeft: "20px" }}>Chọn trạng thái:</label>
+          <Select
+            placeholder={"Bộ lọc"}
+            style={{ width: 150, marginLeft: "10px" }}
+            defaultValue={-2}
+            options={[{
+              value: -2,
+              label: "Tất Cả",
+            }, ...FilmsStatus]}
+            onChange={(value) => {
+              setStatusFilm(value);
+            }}
+          />
+        </Space>
+      </Space>
 
       <Typography.Title level={3}>Danh sách phim: </Typography.Title>
 
@@ -274,28 +304,21 @@ const Films = () => {
         className={cx("course__table")}
         columns={columns}
         dataSource={datas}
-        loading={loading} 
+        loading={loading}
         pagination={{
           pageSize: 10
         }}
-        // onRow={(record, rowIndex) => {
-        //   return {
-        //     onDoubleClick: (event) => {
-        //       navigate(`chi-tiet-khoa-hoc/${record.value.id}`)
-        //     },
-        //   };
-        // }}
-      />  
+      />
 
       <Modal
-        // title={`${isEdit ? "Chỉnh sửa" : "Tạo"}  khóa học`}
+        title={`${isEdit ? "Chỉnh sửa" : "Tạo"}  Phim`}
         open={isModalOpen}
         // onOk={handleOk}
         onCancel={handleCancel}
-        // okText={`${isEdit ? "Cập nhật" : "Tạo"}`}
+        okText={`${isEdit ? "Cập nhật" : "Tạo"}`}
         cancelText="Hủy"
         width="90%"
-        style={{ top: 20, height: "90vh" }}
+        style={{ top: 20, height: "80vh" }}
         maskClosable={false}
       >
         <Form
@@ -308,62 +331,21 @@ const Films = () => {
         >
           <Row gutter={{ xl: 48, md: 16, xs: 0 }}>
             <Col
-              xl={16}
-              md={16}
+              xl={12}
+              md={12}
               xs={24}
               style={{ borderRight: "0.1px solid #ccc" }}
             >
-              <Form.Item label="Mô tả">
-                {/* <TinymceEditor
-                  id="descriptionCourse"
-                  key="descriptionCourse"
-                  editorRef={descRef}
-                  value={valueEdit?.des ?? ""}
-                  heightEditor="400px"
-                /> */}
-              </Form.Item>
-
-              <Form.Item label="Mô tả ngắn" name="shortDes">
-                <TextArea
-                  autoSize={{
-                    minRows: 5,
-                    maxRows: 10,
-                  }}
-                  placeholder="Nhập mô tả ngắn..."
-                  style={{ minWidth: "100%" }}
-                  showCount
-                  maxLength={300}
-                />
-              </Form.Item>
-            </Col>
-            <Col xl={8} md={8} xs={24}>
-              <Form.Item label={<h3>{"Ảnh khóa học"}</h3>} name="avatar">
+              <Form.Item label={<h3>{"Ảnh phim"}</h3>} name="thumbnail">
                 <UploadImg
-                  //   defaultUrl={valueEdit?.avatar}
+                  defaultUrl={valueEdit?.thumbnail}
                   onChangeUrl={(value) => setDataupload(value)}
                 />
               </Form.Item>
 
               <Form.Item
-                name="courseName"
-                label="Tên khóa học"
-                rules={[
-                  {
-                    required: true,
-                    message: "Vui lòng nhập trường này!",
-                  },
-                ]}
-              >
-                <Input
-                  onChange={(e) => {
-                    // form.setFieldsValue({ slug: convertSlug(e.target.value) });
-                  }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="slug"
-                label="Đường dẫn"
+                name="name"
+                label="Tên phim"
                 rules={[
                   {
                     required: true,
@@ -375,8 +357,8 @@ const Films = () => {
               </Form.Item>
 
               <Form.Item
-                name="idCategory"
-                label="Danh mục cha"
+                name="videoUrl"
+                label="Movie Trailer (URL)"
                 rules={[
                   {
                     required: true,
@@ -384,21 +366,11 @@ const Films = () => {
                   },
                 ]}
               >
-                {/* <Select
-                  options={categorys?.map((data) => ({
-                    value: data.id,
-                    label: data.name,
-                  }))}
-                  onChange={(value) => {
-                    setIdCategorysModal(value);
-                  }}
-                  listHeight={128}
-                /> */}
+                <Input />
               </Form.Item>
-
               <Form.Item
-                name="idTag"
-                label="Tag"
+                name="language"
+                label="Ngôn ngữ"
                 rules={[
                   {
                     required: true,
@@ -406,16 +378,99 @@ const Films = () => {
                   },
                 ]}
               >
-                {/* <Select
-                  options={dataTagsModal?.map((data) => ({
-                    value: data.id,
-                    label: data.name,
-                  }))}
-                /> */}
+                <Input />
               </Form.Item>
 
               <Form.Item name="status" label="Trạng thái">
-                {/* <Select options={STATUSES} /> */}
+                <Select options={FilmsStatus} />
+              </Form.Item>
+            </Col>
+            <Col xl={12} md={12} xs={24}>
+              <Form.Item
+                name="director"
+                label="Đạo diễn"
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập trường này!",
+                  },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+
+              <Form.Item
+                name="actor"
+                label="Diễn viên"
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập trường này!",
+                  },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+
+
+              <Form.Item
+                name="runningTime"
+                label="Thời lượng"
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập trường này!",
+                  },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+
+              <Form.Item
+                name="startEndTime"
+                label="Bắt đầu - Kết thúc"
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập trường này!",
+                  },
+                ]}
+              >
+                <RangePicker
+                  defaultValue={[dayjs(startEndTime?.startTime), dayjs(startEndTime?.endTime)]}
+                  onChange={onRangeChange} />
+              </Form.Item>
+
+              <Form.Item
+                name="schedule"
+                label="Lịch chiếu"
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập trường này!",
+                  },
+                ]}
+              >
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row>
+            <Col
+              xl={24}
+              md={24}
+              xs={24}
+            >
+              <Form.Item label="Mô tả" name="description">
+                <TextArea
+                  autoSize={{
+                    minRows: 5,
+                    maxRows: 10,
+                  }}
+                  placeholder="Nhập mô tả ..."
+                  style={{ minWidth: "100%" }}
+                  showCount
+                  maxLength={300}
+                />
               </Form.Item>
             </Col>
           </Row>

@@ -2,30 +2,30 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../../redux/store";
 import { Film } from "../../models/film";
-import { apiGetAllFilm, apiGetFilmByStatus } from "../../api/filmApi";
+import { apiGetAllFilm, apiGetFilmByStatus, apiUpdateFilm } from "../../api/filmApi";
 
 interface FilmState {
   films: Film[],
   loading: boolean,
   error: string,
-  categoryInfo: Film | null
+  filmInfo: Film | null
 }
 
 const initialState: FilmState = {
   films: [],
   loading: false,
   error: "",
-  categoryInfo: null,
+  filmInfo: null,
 };
 
 export const requestLoadFilms = createAsyncThunk('film/loadFilms', async (props: {
   skip?: number;
   limit?: number;
+  status?: number;
 }) => {
   const res = await apiGetAllFilm(props);
   return res.data
 })
-
 
 export const requestLoadFilmsByStatus = createAsyncThunk('film/loadFilmsByStatus', async (props: {
   status: number
@@ -34,13 +34,17 @@ export const requestLoadFilmsByStatus = createAsyncThunk('film/loadFilmsByStatus
   return res.data
 })
 
+export const requestUpdateFilm = createAsyncThunk('film/updateFilm', async (props: Film) => {
+  const res = await apiUpdateFilm(props);
+  return res.data
+})
 
 export const filmSlice = createSlice({
   name: "film",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    const actionList = [requestLoadFilms, requestLoadFilmsByStatus];
+    const actionList = [requestLoadFilms, requestLoadFilmsByStatus, requestUpdateFilm];
     actionList.forEach(action => {
       builder.addCase(action.pending, (state) => {
         state.loading = true;
@@ -66,6 +70,14 @@ export const filmSlice = createSlice({
     }>) => {
       state.loading = false;
       state.films = action.payload.data.map((o) => new Film(o));
+    })
+
+    builder.addCase(requestUpdateFilm.fulfilled, (state, action: PayloadAction<{
+      data: Film,
+      status: number
+    }>) => {
+      state.loading = false;
+      state.filmInfo = action.payload.data;
     })
   },
 });

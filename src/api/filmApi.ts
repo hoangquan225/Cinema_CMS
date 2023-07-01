@@ -5,6 +5,7 @@ import { ApiConfig } from "./config";
 export const apiGetAllFilm = async (payload?: {
   skip?: number;
   limit?: number;
+  status?: number;
 }) => {
   return ApiConfig(
     ENDPONTAPI.GET_ALL_FILM,
@@ -12,6 +13,7 @@ export const apiGetAllFilm = async (payload?: {
       params: {
         skip: payload?.skip,
         limit: payload?.limit,
+        status: payload?.status,
       },
     },
     "GET"
