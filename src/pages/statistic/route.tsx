@@ -1,10 +1,10 @@
-import { FaChartBar } from "react-icons/fa";
+import { BarChartOutlined } from "@ant-design/icons";
 import { lazy } from "react";
 
 const route = {
   path: "/statistic",
   label: "Thống kê",
-  icon: <FaChartBar />,
+  icon: <BarChartOutlined />,
   exact: true,
   public: true,
   component: lazy(() => import(".")),

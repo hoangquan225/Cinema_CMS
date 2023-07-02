@@ -26,15 +26,15 @@ export default class AppConfig {
     COMING: 2,
     FINISH: 3,
   });
-  static FilmCategories = Object.freeze({
-    DRAFT: 0,
-    ROMANCE: 1, // 1 - Phim lãng mạn
-    ADVENTURE: 2, // 2 -  phim phiêu lưu
-    COMEDY: 3, // 3 - Phim hài
-    DOCUMENTARY: 4, // 4 - Phim tài liệu
-    ACTION: 5, // 5 - Phim hành động
-    SCIENCE_FICTIONiction: 6, // 6 - Phim khoa học viễn tưởng
-    WAR: 7, // 7 - Phim về chiến tranh
+  static FilmCategories: Record<string, string> = Object.freeze({
+    DRAFT: "DRAFT",
+    ROMANCE: "ROMANCE", // 1 - Phim lãng mạn
+    ADVENTURE: "ADVENTURE", // 2 -  phim phiêu lưu
+    COMEDY: "COMEDY", // 3 - Phim hài
+    DOCUMENTARY: "DOCUMENTARY", // 4 - Phim tài liệu
+    ACTION: "ACTION", // 5 - Phim hành động
+    SCIENCE_FICTIONiction: "SCIENCE_FICTIONiction", // 6 - Phim khoa học viễn tưởng
+    WAR: "WAR", // 7 - Phim về chiến tranh
   });
 
   // user role

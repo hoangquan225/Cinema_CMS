@@ -6,7 +6,7 @@ import routes from "../../../pages/routes";
 import classNames from "classnames/bind";
 import styles from "./style.module.scss";
 import fallbackAvatar from "../../../assets/img/fallback-avatar.jpg";
-// import Cookies from "js-cookie";
+import Cookies from "js-cookie";
 
 const cx = classNames.bind(styles);
 
@@ -86,7 +86,7 @@ const LayoutDefault = ({ children }: { children?: any }) => {
               className={cx("admin__logout")}
               onClick={() => {
                 navigate("/dang-nhap");
-                // Cookies.remove("tokenAdmin");
+                Cookies.remove("tokenAdmin");
               }}
             >
               Log out

@@ -2,15 +2,13 @@ import { LoadingOutlined } from "@ant-design/icons";
 import { Suspense } from "react";
 import {
   BrowserRouter as Router,
-  Navigate,
   Route,
   Routes,
 } from "react-router-dom";
 import "./App.css";
 import LayoutDefault from "./components/layouts/DefaultLayout";
-// import PrivateRoute from './components/PrivateRoute';
-// import CourseDetail from './pages/courseDetail';
-// import LoginPages from './pages/login';
+import PrivateRoute from './components/PrivateRoute';
+import LoginPages from './pages/login';
 import routes from "./pages/routes";
 
 function App() {
@@ -18,7 +16,8 @@ function App() {
     <Router>
       <Suspense fallback={<LoadingOutlined />}>
         <Routes>
-          {/* <Route path="/" element={<PrivateRoute />}> */}
+        <Route element={<LoginPages />} key={'login'} path={"/dang-nhap"} />
+          <Route path="/" element={<PrivateRoute />}>
           {routes.map(
             ({ component: Component, path, label, ...rest }, index) => {
               return (
@@ -35,7 +34,7 @@ function App() {
               );
             }
           )}
-          {/* </Route> */}
+          </Route>
         </Routes>
       </Suspense>
     </Router>

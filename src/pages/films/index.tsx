@@ -14,6 +14,8 @@ import { filmState, requestLoadFilms, requestUpdateFilm } from "./filmsSlide";
 import { unwrapResult } from "@reduxjs/toolkit";
 import AppConfig from "../../common/config";
 import dayjs from "dayjs";
+import { apiUpdateStateFilm } from "../../api/filmApi";
+import { useNavigate } from "react-router-dom";
 
 const cx = classNames.bind(styles);
 
@@ -53,12 +55,14 @@ const Films = () => {
   const filmReducer = useAppSelector(filmState)
   const films = filmReducer.films;
   const loading = filmReducer.loading;
+  const navigate = useNavigate()
 
   const [dataUpload, setDataupload] = useState<string | null>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [datas, setDatas] = useState<DataType[]>([]);
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const [valueEdit, setValueEdit] = useState<Film | undefined>();
+
   const [statusFilm, setStatusFilm] = useState<number>(-2);
 
   const [sche, setSche] = useState<{
@@ -80,8 +84,8 @@ const Films = () => {
 
   useEffect(() => {
     if (valueEdit) {
-      const { name, description, videoUrl, thumbnail, category, director, actor, language, status, runningTime, schedule } = valueEdit;
-      form.setFieldsValue({ name, description, videoUrl, thumbnail, category: category.join(","), director: director.join(","), actor: actor.join(","), language, status, runningTime, schedule });
+      const { name, description, videoUrl, thumbnail, category, director, actor, startTime, endTime, language, status, runningTime, schedule } = valueEdit;
+      form.setFieldsValue({ name, description, startEndTime: [dayjs(startTime), dayjs(endTime)], videoUrl, thumbnail, category: category, director: director.join(","), actor: actor.join(","), language, status, runningTime, schedule });
 
       const convertedSchedule = schedule?.map((time, index) => ({
         time: Number(time),
@@ -91,6 +95,21 @@ const Films = () => {
     }
   }, [valueEdit]);
 
+
+  useEffect(() => {
+    handleUpdateStateFilm()
+  }, [films]);
+
+  const handleUpdateStateFilm = async () => {
+    try {
+      await apiUpdateStateFilm()
+    } catch (error) {
+      notification.error({
+        message: "cập nhật không thành công",
+        duration: 1.5,
+      });
+    }
+  }
 
   const convertDataToTable = (value: Film) => {
     return {
@@ -172,14 +191,9 @@ const Films = () => {
         endTime: startEndTime[1].valueOf(),
         actor: actor.split(","),
         director: director.split(","),
-        category: category.split(","),
+        category: Array.isArray(category) ? category : category.split(","),
         thumbnail: thumbnail || dataUpload
       }
-      console.log({
-        id: valueEdit?.id,
-        ...valueEdit,
-        ...infoFilm
-      });
 
       try {
         const data = await dispatch(
@@ -190,11 +204,14 @@ const Films = () => {
           })
         );
         unwrapResult(data);
+
+        await apiUpdateStateFilm()
         if (statusFilm !== -2) {
           loadAllFilms(100, 0, statusFilm);
         } else {
           loadAllFilms();
         }
+
         notification.success({
           message: "Cập nhật thành công",
           duration: 1.5,
@@ -206,7 +223,7 @@ const Films = () => {
         });
       }
       handleCancel();
-    });
+    }).catch(err => err)
   };
 
 
@@ -269,7 +286,7 @@ const Films = () => {
       render: (text: number) => (
         <>
           <Tag>
-            {moment(text).format("MMM Do YYYY")}
+            {moment(text).format("Do MMM YYYY")}
           </Tag>
         </>
       ),
@@ -282,7 +299,7 @@ const Films = () => {
       render: (text: number) => (
         <>
           <Tag>
-            {moment(text).format("MMM Do YYYY")}
+            {moment(text).format("Do MMM YYYY")}
           </Tag>
         </>
       ),
@@ -331,6 +348,10 @@ const Films = () => {
         <Button type="primary" onClick={openCreateModal}>
           Thêm mới
         </Button>
+
+        {/* <Button type="primary" onClick={handleUpdateStateFilm}>
+          Cập nhật trạng thái Phim
+        </Button> */}
 
         <Space size="small">
           <label style={{ marginLeft: "20px" }}>Chọn trạng thái:</label>
@@ -482,7 +503,13 @@ const Films = () => {
                   },
                 ]}
               >
-                <Input />
+                <Select
+                  mode="multiple"
+                  options={Object.keys(AppConfig.FilmCategories).map((key) => ({
+                    value: key,
+                    label: AppConfig.FilmCategories[key],
+                  }))}
+                />
               </Form.Item>
 
 
@@ -514,9 +541,7 @@ const Films = () => {
                 ]}
 
               >
-                <RangePicker
-                  defaultValue={[dayjs(valueEdit?.startTime || undefined), dayjs(valueEdit?.endTime || undefined)]}
-                />
+                <RangePicker format="DD-MM-YYYY" />
 
               </Form.Item>
 

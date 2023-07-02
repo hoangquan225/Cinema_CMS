@@ -53,3 +53,10 @@ export const apiSearchFilm = async (params: { name: string }) => {
     "GET"
   );
 };
+
+
+export const apiUpdateStateFilm = async () => {
+  return ApiConfig(
+    ENDPONTAPI.AUTO_UPDATE_STATUS_FILM
+  );
+};

@@ -28,4 +28,7 @@ export default class ENDPONTAPI {
     '/ticket/get-seat-of-schedule-by-ticket';
   //upload
   static UPLOAD = '/upload';
+
+  // statistic 
+  static LOAD_STATISTIC = '/loadStatistic'
 }
