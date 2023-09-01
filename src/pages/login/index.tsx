@@ -14,26 +14,23 @@ import styles from "./login.module.scss";
 const cx = classNames.bind(styles);
 
 const LoginPages = () => {
-
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const authStates = useAppSelector(authState)
+  const authStates = useAppSelector(authState);
 
   useEffect(() => {
-    checkLogin()
-  }, [])
+    checkLogin();
+  }, []);
 
   const checkLogin = async () => {
     const cookie = Cookies.get("tokenAdmin");
     try {
-      const result = await dispatch(
-        requestGetUserFromToken({ token: cookie || "" })
-      );
+      const result = await dispatch(requestGetUserFromToken({ token: cookie || "" }));
       const data = unwrapResult(result);
       console.log(data.userInfo);
 
       if (data.userInfo?._id) {
-        navigate('/')
+        navigate("/");
       }
     } catch (error) {
       if (cookie)
@@ -41,19 +38,16 @@ const LoginPages = () => {
           message: "Server đang bị lỗi",
         });
     }
-  }
+  };
 
-  const handleLogin: any = async (data: {
-    email: string;
-    password: string;
-  }) => {
+  const handleLogin: any = async (data: { email: string; password: string }) => {
     try {
       // const encodePassword = encrypt(data.password);
       const actionResult = await dispatch(
         requestLogin({
           email: data.email,
           password: data.password,
-          userRole: AppConfig.ROLE_ADMIN
+          userRole: AppConfig.ROLE_ADMIN,
         })
       );
 
@@ -81,7 +75,7 @@ const LoginPages = () => {
           Cookies.set("tokenAdmin", res.token, {
             expires: 60 * 60 * 24 * 30,
           });
-          navigate('/')
+          navigate("/");
           return notification.success({
             message: "Đăng nhập thành công",
             duration: 1.5,
@@ -98,74 +92,75 @@ const LoginPages = () => {
   return (
     <>
       <div className={cx("login__over")}>
-        {
-          authStates.loadingCheckLogin ? <LoadingOutlined /> : (
-            <div className={cx("login__wrapper")}>
-              <h2 className={cx("login__title")}>Đăng Nhập</h2>
-              <Form
-                name="normal_login"
-                className={cx("login__form")}
-                initialValues={{
-                  remember: true,
-                }}
-                onFinish={handleLogin}
+        {authStates.loadingCheckLogin ? (
+          <LoadingOutlined />
+        ) : (
+          <div className={cx("login__wrapper")}>
+            <h2 className={cx("login__title")}>Đăng Nhập</h2>
+            <Form
+              name="normal_login"
+              className={cx("login__form")}
+              initialValues={{
+                remember: true,
+              }}
+              onFinish={handleLogin}
+            >
+              <Form.Item
+                name="email"
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập email đúng!",
+                    pattern: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,4}$/,
+                  },
+                ]}
               >
-                <Form.Item
-                  name="email"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập trường này!",
-                    },
-                  ]}
-                >
-                  <Input
-                    prefix={
-                      <UserOutlined
-                        className={cx("site-form-item-icon input__icon")}
-                        style={{ fontSize: "1rem", marginRight: "0.8rem" }}
-                      />
-                    }
-                    placeholder="Nhập tài khoản"
-                    style={{ padding: "12px" }}
-                  />
-                </Form.Item>
-                <Form.Item
-                  name="password"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập trường này!",
-                    },
-                  ]}
-                >
-                  <Input.Password
-                    prefix={
-                      <LockOutlined
-                        className={cx("site-form-item-icon input__icon")}
-                        style={{ fontSize: "1rem", marginRight: "0.8rem" }}
-                      />
-                    }
-                    type="password"
-                    placeholder="Nhập mật khẩu"
-                    style={{ padding: "12px" }}
-                  />
-                </Form.Item>
+                <Input
+                  prefix={
+                    <UserOutlined
+                      className={cx("site-form-item-icon input__icon")}
+                      style={{ fontSize: "1rem", marginRight: "0.8rem" }}
+                    />
+                  }
+                  placeholder="Nhập tài khoản"
+                  style={{ padding: "12px" }}
+                />
+              </Form.Item>
+              <Form.Item  
+                name="password"
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng nhập trường này!",
+                  },
+                ]}
+              >
+                <Input.Password
+                  prefix={
+                    <LockOutlined
+                      className={cx("site-form-item-icon input__icon")}
+                      style={{ fontSize: "1rem", marginRight: "0.8rem" }}
+                    />
+                  }
+                  type="password"
+                  placeholder="Nhập mật khẩu"
+                  style={{ padding: "12px" }}
+                />
+              </Form.Item>
 
-                <Form.Item>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    className={cx("login-form-button")}
+              <Form.Item>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  className={cx("login-form-button")}
                   // loading={loading}
-                  >
-                    Đăng nhập
-                  </Button>
-                </Form.Item>
-              </Form>
-            </div>
-          )
-        }
+                >
+                  Đăng nhập
+                </Button>
+              </Form.Item>
+            </Form>
+          </div>
+        )}
       </div>
     </>
   );
