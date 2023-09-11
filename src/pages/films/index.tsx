@@ -96,9 +96,9 @@ const Films = () => {
   }, [valueEdit]);
 
 
-  useEffect(() => {
-    handleUpdateStateFilm()
-  }, [films]);
+  // useEffect(() => {
+  //   handleUpdateStateFilm()
+  // }, [films]);
 
   const handleUpdateStateFilm = async () => {
     try {
@@ -349,9 +349,9 @@ const Films = () => {
           Thêm mới
         </Button>
 
-        {/* <Button type="primary" onClick={handleUpdateStateFilm}>
+        <Button type="primary" onClick={handleUpdateStateFilm}>
           Cập nhật trạng thái Phim
-        </Button> */}
+        </Button>
 
         <Space size="small">
           <label style={{ marginLeft: "20px" }}>Chọn trạng thái:</label>

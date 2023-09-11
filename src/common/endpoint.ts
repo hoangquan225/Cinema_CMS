@@ -26,9 +26,16 @@ export default class ENDPONTAPI {
   static GET_ALL_TICKET = '/ticket/get-all-ticket';
   static GET_SEAT_OF_SCHEDULE_BY_TICKET =
     '/ticket/get-seat-of-schedule-by-ticket';
+  static GET_TICKET_BY_USER = '/ticket/get-ticket-by-user';
+
+
   //upload
   static UPLOAD = '/upload';
 
   // statistic 
   static LOAD_STATISTIC = '/loadStatistic'
+
+  //schedule
+  static UPDATE_SCHEDULE = '/schedule/update-schedule'
+  static GET_SCHEDULE = '/schedule/get-schedule'
 }

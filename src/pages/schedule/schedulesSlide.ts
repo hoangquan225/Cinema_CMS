@@ -2,12 +2,14 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../../redux/store";
 import { Schedule } from "../../models/schedule";
+import { apiGetSchedule } from "../../api/sheduleApi";
 
 interface ScheduleState {
   schedules: Schedule[],
   loading: boolean,
   error: string,
-  schedulesInfo: Schedule | null
+  schedulesInfo: Schedule | null,
+  total: number
 }
 
 const initialState: ScheduleState = {
@@ -15,7 +17,14 @@ const initialState: ScheduleState = {
   loading: false,
   error: "",
   schedulesInfo: null,
+  total: 0
 };
+
+export const requestGetSchedule = createAsyncThunk('film/getSchedule',
+  async (props: { filmId?: string, limit?: number, skip?: number }) => {
+    const res = await apiGetSchedule(props);
+    return res.data
+  })
 
 
 export const scheduleSlice = createSlice({
@@ -23,7 +32,7 @@ export const scheduleSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    const actionList: any[] = [];
+    const actionList: any[] = [requestGetSchedule];
     actionList.forEach(action => {
       builder.addCase(action.pending, (state) => {
         state.loading = true;
@@ -35,7 +44,16 @@ export const scheduleSlice = createSlice({
       })
     })
 
-    
+    builder.addCase(requestGetSchedule.fulfilled, (state, action: PayloadAction<{
+      data: Schedule[],
+      status: number,
+      count: number
+    }>) => {
+      state.loading = false;
+      state.schedules = action.payload.data.map((o) => new Schedule(o));
+      state.total = action.payload.count;
+    })
+
   },
 });
 
