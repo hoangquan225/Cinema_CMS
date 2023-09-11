@@ -1,4 +1,4 @@
-import { Button, Checkbox, Col, DatePicker, Form, Image, Input, Modal, Popconfirm, Row, Select, Space, Tag, TimePicker, Tooltip, Typography, notification } from "antd";
+import { Button, Col, DatePicker, Form, Image, Input, Modal, Popconfirm, Row, Select, Space, Tag, TimePicker, Tooltip, Typography, notification } from "antd";
 import { useForm } from "antd/es/form/Form";
 import TextArea from "antd/es/input/TextArea";
 import UploadImg from "../../components/UploadImg";
@@ -7,7 +7,7 @@ import { Film } from "../../models/film";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import Table, { ColumnsType } from "antd/es/table";
 import classNames from "classnames/bind";
-import styles from "./schedules.module.scss";
+import styles from "./ticket.module.scss";
 import moment from "moment";
 import { useAppDispatch, useAppSelector } from "../../redux/hook";
 import { unwrapResult } from "@reduxjs/toolkit";
@@ -16,9 +16,9 @@ import dayjs from "dayjs";
 import { apiUpdateStateFilm } from "../../api/filmApi";
 import { useNavigate } from "react-router-dom";
 import { Schedule } from "../../models/schedule";
-import { requestGetSchedule, requestUpdateSchedule, scheduleState } from "./schedulesSlide";
 import { filmState, requestLoadFilms } from "../films/filmsSlide";
 import { apiUpdateSchedule } from "../../api/sheduleApi";
+import { requestGetTicket, ticketState } from "./ticketSlice";
 
 const cx = classNames.bind(styles);
 
@@ -36,45 +36,46 @@ const Schedules = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate()
 
-  const scheduleReducer = useAppSelector(scheduleState)
-  const schedules = scheduleReducer.schedules;
-  const total = scheduleReducer.total;
-  const loading = scheduleReducer.loading;
+  const ticketReducer = useAppSelector(ticketState)
+  const tickets = ticketReducer.tickets;
+  const total = ticketReducer.total;
+  const loading = ticketReducer.loading;
+
   const filmReducer = useAppSelector(filmState)
   const films = filmReducer.films;
-
   const [filmId, setFilmId] = useState<string>();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [datas, setDatas] = useState<DataType[]>([]);
-  const [isEdit, setIsEdit] = useState<boolean>(false);
-  const [valueEdit, setValueEdit] = useState<Schedule | undefined>();
 
-  const openCreateModal = () => {
-    setIsModalOpen(true);
-    setValueEdit(undefined);
-    setIsEdit(false);
-  };
+  // const [isModalOpen, setIsModalOpen] = useState(false);
+  const [datas, setDatas] = useState<DataType[]>([]);
+  // const [isEdit, setIsEdit] = useState<boolean>(false);
+  // const [valueEdit, setValueEdit] = useState<Schedule | undefined>();
+
+  // const openCreateModal = () => {
+  //   setIsModalOpen(true);
+  //   setValueEdit(undefined);
+  //   setIsEdit(false);
+  // };
 
   useEffect(() => {
     loadAllFilms();
   }, []);
 
   useEffect(() => {
-    if (filmId) {
-      loadAllSchedules(100, 0, filmId)
-    } else {
-      loadAllSchedules()
-    }
+    // if (filmId) {
+    //   loadAllSchedules(100, 0, filmId)
+    // } else {
+      loadAllTicket()
+    // }
   }, [filmId]);
 
-  useEffect(() => {
-    setDatas(schedules?.map(o => convertDataToTable(o)))
-  }, [schedules])
+  // useEffect(() => {
+  //   setDatas(schedules?.map(o => convertDataToTable(o)))
+  // }, [schedules])
 
-  const loadAllSchedules = async (limit?: number, skip?: number, filmId?: string) => {
+  const loadAllTicket = async (limit?: number, skip?: number, filmId?: string, scheduleId?: string) => {
     try {
       const actionResult = await dispatch(
-        requestGetSchedule({ limit: limit || 100, skip: skip || 0, filmId: filmId })
+        requestGetTicket({ limit, skip, filmId, scheduleId })
       );
       unwrapResult(actionResult);
     } catch (error) {
@@ -98,29 +99,29 @@ const Schedules = () => {
   };
 
 
-  useEffect(() => {
-    if (valueEdit) {
-      const { nSeat, filmId, showTime, startTime, endTime } = valueEdit;
-      form.setFieldsValue({ nSeat, startEndTime: [dayjs(startTime), dayjs(endTime)], showTime: dayjs(showTime), filmId });
-    }
-  }, [valueEdit]);
+  // useEffect(() => {
+  //   if (valueEdit) {
+  //     const { nSeat, filmId, showTime, startTime, endTime } = valueEdit;
+  //     form.setFieldsValue({ nSeat, startEndTime: [dayjs(startTime), dayjs(endTime)], showTime: dayjs(showTime), filmId });
+  //   }
+  // }, [valueEdit]);
 
-  const convertDataToTable = (value: Schedule) => {
-    return {
-      key: `${value?.id || Math.random()}`,
-      nameFilm: `${value?.filmInfo?.name}`,
-      nSeat: value?.nSeat,
-      startTime: value?.startTime,
-      endTime: value?.endTime,
-      value: value,
-    };
-  };
+  // const convertDataToTable = (value: Schedule) => {
+  //   return {
+  //     key: `${value?.id || Math.random()}`,
+  //     nameFilm: `${value?.filmInfo?.name}`,
+  //     nSeat: value?.nSeat,
+  //     startTime: value?.startTime,
+  //     endTime: value?.endTime,
+  //     value: value,
+  //   };
+  // };
 
-  const handleCancel = () => {
-    setIsModalOpen(false);
-    setValueEdit(undefined);
-    form.resetFields();
-  };
+  // const handleCancel = () => {
+  //   setIsModalOpen(false);
+  //   setValueEdit(undefined);
+  //   form.resetFields();
+  // };
 
   // const handleDelete = async (value: Film) => {
   //   try {
@@ -151,62 +152,60 @@ const Schedules = () => {
   //   }
   // };
 
-  const handleOk = () => {
-    form.validateFields().then(async (value) => {
-      const { startEndTime, showTime, nSeat } = value
-      console.log({value});
-      
-      // const startTimeString: string = `${showTime.format("DD/MM/YYYY")} ${startEndTime[0].format("HH:mm")}`
-      // const endTimeString: string = `${showTime.format("DD/MM/YYYY")} ${startEndTime[1].format("HH:mm")}`
-      // const infoSchedule = {
-      //   filmId: value.filmId,
-      //   nSeat: nSeat,
-      //   showTime: moment(startTimeString, 'DD/MM/YYYY HH:mm').valueOf(),
-      //   startTime: moment(startTimeString, 'DD/MM/YYYY HH:mm').valueOf(),
-      //   endTime: moment(endTimeString, 'DD/MM/YYYY HH:mm').valueOf()
-      // }
+  // const handleOk = () => {
+  //   form.validateFields().then(async (value) => {
+  //     const { startEndTime, showTime, nSeat } = value
+  //     const startTimeString: string = `${showTime.format("DD/MM/YYYY")} ${startEndTime[0].format("HH:mm")}`
+  //     const endTimeString: string = `${showTime.format("DD/MM/YYYY")} ${startEndTime[1].format("HH:mm")}`
+  //     const infoSchedule = {
+  //       filmId: value.filmId,
+  //       nSeat: nSeat,
+  //       showTime: moment(startTimeString, 'DD/MM/YYYY HH:mm').valueOf(),
+  //       startTime: moment(startTimeString, 'DD/MM/YYYY HH:mm').valueOf(),
+  //       endTime: moment(endTimeString, 'DD/MM/YYYY HH:mm').valueOf()
+  //     }
 
-      // try {
-      //   const results = await dispatch(
-      //     requestUpdateSchedule({
-      //       id: valueEdit?.id,
-      //       ...valueEdit,
-      //       ...infoSchedule
-      //     })
-      //   );
-      //   const res = unwrapResult(results);
-      //   // const res = await apiUpdateSchedule({
-      //   //           id: valueEdit?.id,
-      //   //     ...valueEdit,
-      //   //     ...infoSchedule
-      //   // })
-      //   // console.log({res: res.data});
-      //   if(res.status === 0) {
-      //     notification.success({
-      //       message: isEdit ? "Cập nhật thành công" : "Tạo thành công",
-      //       duration: 1.5,
-      //     });
-      //     handleCancel();
-      //   }else if(res.status === -1) {
-      //     notification.error({
-      //       message: `${res.message}` + ", vui lòng chọn lịch chiếu khác",
-      //       duration: 2.5,
-      //     });
-      //   }
+  //     try {
+  //       const results = await dispatch(
+  //         requestUpdateSchedule({
+  //           id: valueEdit?.id,
+  //           ...valueEdit,
+  //           ...infoSchedule
+  //         })
+  //       );
+  //       const res = unwrapResult(results);
+  //       // const res = await apiUpdateSchedule({
+  //       //           id: valueEdit?.id,
+  //       //     ...valueEdit,
+  //       //     ...infoSchedule
+  //       // })
+  //       // console.log({res: res.data});
+  //       if(res.status === 0) {
+  //         notification.success({
+  //           message: isEdit ? "Cập nhật thành công" : "Tạo thành công",
+  //           duration: 1.5,
+  //         });
+  //         handleCancel();
+  //       }else if(res.status === -1) {
+  //         notification.error({
+  //           message: `${res.message}` + ", vui lòng chọn lịch chiếu khác",
+  //           duration: 2.5,
+  //         });
+  //       }
        
-      //   if (filmId) {
-      //     loadAllSchedules(100, 0, filmId)
-      //   } else {
-      //     loadAllSchedules()
-      //   }
-      // } catch (error) {
-      //   notification.error({
-      //     message: "Error",
-      //     duration: 1.5,
-      //   });
-      // }
-    }).catch(err => err)
-  };
+  //       if (filmId) {
+  //         loadAllSchedules(100, 0, filmId)
+  //       } else {
+  //         loadAllSchedules()
+  //       }
+  //     } catch (error) {
+  //       notification.error({
+  //         message: "Error",
+  //         duration: 1.5,
+  //       });
+  //     }
+  //   }).catch(err => err)
+  // };
 
   const columns: ColumnsType<DataType> = [
     {
@@ -223,51 +222,40 @@ const Schedules = () => {
       render: (text) => <span>{text}</span>,
     },
     {
-      title: "Ngày chiếu",
-      key: "startTime",
-      dataIndex: "startTime",
-      align: "center",
-      render: (text: number) => (
-        <>
-          <Tag>
-            {moment(text).format("DD/MM/YYYY")}
-          </Tag>
-        </>
-      ),
-      sorter: (a, b) => a.startTime - b.startTime,
-    },
-    {
-      title: "Giờ bắt đầu",
-      key: "startTime",
-      dataIndex: "startTime",
-      align: "center",
-      render: (text: number) => (
-        <>
-          <Tag>
-            {moment(text).format("HH:mm")}
-          </Tag>
-        </>
-      ),
-    },
-    {
-      title: "Giờ kết thúc",
-      key: "endTime",
-      dataIndex: "endTime",
-      align: "center",
-      render: (text: number) => (
-        <>
-          <Tag>
-            {moment(text).format("HH:mm")}
-          </Tag>
-        </>
-      ),
-    },
-    {
-      title: "Số lượng vé",
-      dataIndex: "nSeat",
-      key: "nSeat",
+      title: "Id Người đặt",
+      dataIndex: "userId",
+      key: "userId",
       align: "center",
       render: (text) => <span>{text}</span>,
+    },
+    {
+      title: "Thời gian chiếu",
+      key: "startTime",
+      dataIndex: "startTime",
+      align: "center",
+      render: (text: number) => (
+        <>
+          <Tag>
+            {moment(text).format("DD/MM/YYYY HH:mm")}
+          </Tag>
+        </>
+      )
+    },
+    {
+      title: "Ghế ngồi",
+      dataIndex: "seat",
+      key: "seat",
+      align: "center",
+      render: (text) => <span>{text.join(', ')}</span>,
+    },
+    {
+      title: "Thành tiền",
+      key: "price",
+      dataIndex: "price",
+      align: "center",
+      render: (text: number) => (
+        <span>{text}</span>
+      ),
     },
     {
       title: "Hành động",
@@ -279,9 +267,9 @@ const Schedules = () => {
           <Tooltip placement="top" title="Chỉnh sửa">
             <Button
               onClick={() => {
-                setIsModalOpen(true);
-                setValueEdit(text);
-                setIsEdit(true);
+                // setIsModalOpen(true);
+                // setValueEdit(text);
+                // setIsEdit(true);
               }}
             >
               <EditOutlined />
@@ -311,23 +299,23 @@ const Schedules = () => {
     <div>
 
       <Space size="large">
-        <Button type="primary" onClick={openCreateModal}>
+        {/* <Button type="primary" onClick={openCreateModal}>
           Thêm mới
-        </Button>
+        </Button> */}
 
         <Space size="small">
           <label style={{ marginLeft: "20px" }}>Chọn Phim:</label>
 
           <Select
             showSearch
-            style={{ width: 250, marginLeft: "10px" }}
+            style={{ width: 250, marginLeft: "10px", textAlign: 'center' }}
             placeholder={"Search to Select"}
             filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
             optionFilterProp="children"
             filterSort={(optionA, optionB) =>
               (optionA?.label ?? '').toLowerCase().localeCompare((optionB?.label ?? '').toLowerCase())
             }
-            options={[{ value: 0, label: "--- All ---" }, ...films?.map((data) => ({
+            options={[{ value: 0, label: "------ All ------" }, ...films?.map((data) => ({
               value: data.id,
               label: data.name,
             }))]}
@@ -344,14 +332,14 @@ const Schedules = () => {
         className={cx("course__table")}
         columns={columns}
         dataSource={datas}
-        loading={loading}
+        // loading={loading}
         pagination={{
           pageSize: 30
         }}
       />
 
-      <Modal
-        title={`${isEdit ? "Chỉnh sửa" : "Tạo"}  Suất chiếu`}
+      {/* <Modal
+        title={`${isEdit ? "Chỉnh sửa" : "Tạo"}  Phim`}
         open={isModalOpen}
         onOk={handleOk}
         onCancel={handleCancel}
@@ -409,7 +397,7 @@ const Schedules = () => {
             />
           </Form.Item>
 
-          {/* <Form.Item
+          <Form.Item
             name="startEndTime"
             label="Giờ bắt đầu - Giờ kết thúc"
             rules={[
@@ -422,38 +410,6 @@ const Schedules = () => {
             <TimePicker.RangePicker
               format={'HH:mm'}
               style={{ width: '100%' }}
-            />
-          </Form.Item> */}
-
-          <Form.Item
-            name="startEndTime"
-            label="Giờ chiếu"
-            rules={[
-              {
-                required: true,
-                message: "Vui lòng nhập trường này!",
-              },
-            ]}
-          >
-            <Checkbox.Group 
-              options={[
-                {
-                  label: '9:00',
-                  value: '9:00',
-                },
-                {
-                  label: '12:00',
-                  value: '12:00',
-                },
-                {
-                  label: '15:00',
-                  value: '15:00',
-                },
-                {
-                  label: '18:00',
-                  value: '18:00',
-                },
-              ]}
             />
           </Form.Item>
 
@@ -471,7 +427,7 @@ const Schedules = () => {
             <Input type="number" />
           </Form.Item>
         </Form>
-      </Modal>
+      </Modal> */}
     </div >
   );
 };

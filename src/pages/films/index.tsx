@@ -263,7 +263,7 @@ const Films = () => {
       dataIndex: "director",
       key: "director",
       align: "center",
-      render: (text) => <span>{text}</span>,
+      render: (text) => <span>{text.join(', ')}</span>,
     },
     {
       title: "Trạng thái",
