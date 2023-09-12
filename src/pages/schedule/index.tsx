@@ -25,8 +25,8 @@ const cx = classNames.bind(styles);
 interface DataType {
   key: string;
   nameFilm: string;
-  startTime: number;
-  endTime: number;
+  showDate: number;
+  showTime: [string];
   nSeat: number;
   value: Schedule;
 }
@@ -100,8 +100,8 @@ const Schedules = () => {
 
   useEffect(() => {
     if (valueEdit) {
-      const { nSeat, filmId, showTime, startTime, endTime } = valueEdit;
-      form.setFieldsValue({ nSeat, startEndTime: [dayjs(startTime), dayjs(endTime)], showTime: dayjs(showTime), filmId });
+      const { nSeat, filmId, showDate, startTime, endTime, showTime } = valueEdit;
+      form.setFieldsValue({ nSeat, startEndTime: [dayjs(startTime), dayjs(endTime)], showDate: dayjs(showDate),showTime, filmId });
     }
   }, [valueEdit]);
 
@@ -110,8 +110,8 @@ const Schedules = () => {
       key: `${value?.id || Math.random()}`,
       nameFilm: `${value?.filmInfo?.name}`,
       nSeat: value?.nSeat,
-      startTime: value?.startTime,
-      endTime: value?.endTime,
+      showDate: value?.showDate,
+      showTime: value?.showTime,
       value: value,
     };
   };
@@ -153,9 +153,7 @@ const Schedules = () => {
 
   const handleOk = () => {
     form.validateFields().then(async (value) => {
-      const { startEndTime, showTime, nSeat } = value
-      console.log({value});
-      
+      const { startEndTime, showTime, nSeat, showDate } = value
       // const startTimeString: string = `${showTime.format("DD/MM/YYYY")} ${startEndTime[0].format("HH:mm")}`
       // const endTimeString: string = `${showTime.format("DD/MM/YYYY")} ${startEndTime[1].format("HH:mm")}`
       // const infoSchedule = {
@@ -166,45 +164,46 @@ const Schedules = () => {
       //   endTime: moment(endTimeString, 'DD/MM/YYYY HH:mm').valueOf()
       // }
 
-      // try {
-      //   const results = await dispatch(
-      //     requestUpdateSchedule({
-      //       id: valueEdit?.id,
-      //       ...valueEdit,
-      //       ...infoSchedule
-      //     })
-      //   );
-      //   const res = unwrapResult(results);
-      //   // const res = await apiUpdateSchedule({
-      //   //           id: valueEdit?.id,
-      //   //     ...valueEdit,
-      //   //     ...infoSchedule
-      //   // })
-      //   // console.log({res: res.data});
-      //   if(res.status === 0) {
-      //     notification.success({
-      //       message: isEdit ? "Cập nhật thành công" : "Tạo thành công",
-      //       duration: 1.5,
-      //     });
-      //     handleCancel();
-      //   }else if(res.status === -1) {
-      //     notification.error({
-      //       message: `${res.message}` + ", vui lòng chọn lịch chiếu khác",
-      //       duration: 2.5,
-      //     });
-      //   }
+      const infoSchedule = {
+        filmId: value.filmId,
+        nSeat: nSeat,
+        showTime: showTime,
+        showDate: showDate.valueOf(),
+      }
+
+      try {
+        const results = await dispatch(
+          requestUpdateSchedule({
+            id: valueEdit?.id,
+            ...valueEdit,
+            ...infoSchedule
+          })
+        );
+        const res = unwrapResult(results);
+        if(res.status === 0) {
+          notification.success({
+            message: isEdit ? "Cập nhật thành công" : "Tạo thành công",
+            duration: 1.5,
+          });
+          handleCancel();
+        }else if(res.status === -1) {
+          notification.error({
+            message: `${res.message}` + ", vui lòng chọn lịch chiếu khác",
+            duration: 2.5,
+          });
+        }
        
-      //   if (filmId) {
-      //     loadAllSchedules(100, 0, filmId)
-      //   } else {
-      //     loadAllSchedules()
-      //   }
-      // } catch (error) {
-      //   notification.error({
-      //     message: "Error",
-      //     duration: 1.5,
-      //   });
-      // }
+        if (filmId) {
+          loadAllSchedules(100, 0, filmId)
+        } else {
+          loadAllSchedules()
+        }
+      } catch (error) {
+        notification.error({
+          message: "Error",
+          duration: 1.5,
+        });
+      }
     }).catch(err => err)
   };
 
@@ -224,8 +223,8 @@ const Schedules = () => {
     },
     {
       title: "Ngày chiếu",
-      key: "startTime",
-      dataIndex: "startTime",
+      key: "showDate",
+      dataIndex: "showDate",
       align: "center",
       render: (text: number) => (
         <>
@@ -234,36 +233,24 @@ const Schedules = () => {
           </Tag>
         </>
       ),
-      sorter: (a, b) => a.startTime - b.startTime,
+      sorter: (a, b) => a.showDate - b.showDate,
     },
     {
-      title: "Giờ bắt đầu",
-      key: "startTime",
-      dataIndex: "startTime",
+      title: "Giờ chiếu",
+      key: "showTime",
+      dataIndex: "showTime",
       align: "center",
-      render: (text: number) => (
-        <>
-          <Tag>
-            {moment(text).format("HH:mm")}
-          </Tag>
-        </>
-      ),
-    },
-    {
-      title: "Giờ kết thúc",
-      key: "endTime",
-      dataIndex: "endTime",
-      align: "center",
-      render: (text: number) => (
-        <>
-          <Tag>
-            {moment(text).format("HH:mm")}
-          </Tag>
-        </>
-      ),
+      render: (text: any) => <>{text?.map((e: any) => <Tag key={e}>{e}</Tag>)}</>,
     },
     {
       title: "Số lượng vé",
+      dataIndex: "nSeat",
+      key: "nSeat",
+      align: "center",
+      render: (text) => <span>{text}</span>,
+    },
+    {
+      title: "Số lượng đã vé",
       dataIndex: "nSeat",
       key: "nSeat",
       align: "center",
@@ -394,7 +381,7 @@ const Schedules = () => {
           </Form.Item>
 
           <Form.Item
-            name="showTime"
+            name="showDate"
             label="Ngày chiều"
             rules={[
               {
@@ -424,9 +411,8 @@ const Schedules = () => {
               style={{ width: '100%' }}
             />
           </Form.Item> */}
-
           <Form.Item
-            name="startEndTime"
+            name="showTime"
             label="Giờ chiếu"
             rules={[
               {
@@ -438,8 +424,8 @@ const Schedules = () => {
             <Checkbox.Group 
               options={[
                 {
-                  label: '9:00',
-                  value: '9:00',
+                  label: '09:00',
+                  value: '09:00',
                 },
                 {
                   label: '12:00',

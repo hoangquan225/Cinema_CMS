@@ -12,7 +12,8 @@ class Ticket {
   scheduleId: string | null;
   scheduleInfo: Schedule | null;
   seat: number[]; // vi tri ghe
-  showTime: number; // ngay, gio chieu phim
+  showTime: string; // gio chieu phim
+  showDate: number; // ngay chieu phim
   price: number;
   paid: boolean;
   createdAt: number;
@@ -30,7 +31,8 @@ class Ticket {
     this.scheduleId = isObject(args.scheduleId) ? new Film(args.scheduleId)?.id : (args?.scheduleId ?? undefined);
     this.scheduleInfo = isObject(args.scheduleId) ? new Film(args.scheduleId) : (args?.scheduleInfo ?? undefined);
     this.seat = args?.seat ?? [];
-    this.showTime = args?.showTime ?? 0;
+    this.showTime = args?.showTime ?? '';
+    this.showDate = args?.showDate ?? 0;
     this.price = args?.price ?? 0;
     this.paid = args?.paid ?? false;
     this.createdAt = args?.createdAt ?? Date.now();
