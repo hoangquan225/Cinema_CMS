@@ -1,9 +1,6 @@
 import { Button, Col, DatePicker, Form, Image, Input, Modal, Popconfirm, Row, Select, Space, Tag, TimePicker, Tooltip, Typography, notification } from "antd";
 import { useForm } from "antd/es/form/Form";
-import TextArea from "antd/es/input/TextArea";
-import UploadImg from "../../components/UploadImg";
 import { useState, useEffect } from "react";
-import { Film } from "../../models/film";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import Table, { ColumnsType } from "antd/es/table";
 import classNames from "classnames/bind";
@@ -11,30 +8,25 @@ import styles from "./ticket.module.scss";
 import moment from "moment";
 import { useAppDispatch, useAppSelector } from "../../redux/hook";
 import { unwrapResult } from "@reduxjs/toolkit";
-import AppConfig from "../../common/config";
-import dayjs from "dayjs";
-import { apiUpdateStateFilm } from "../../api/filmApi";
-import { useNavigate } from "react-router-dom";
-import { Schedule } from "../../models/schedule";
 import { filmState, requestLoadFilms } from "../films/filmsSlide";
-import { apiUpdateSchedule } from "../../api/sheduleApi";
-import { requestGetTicket, ticketState } from "./ticketSlice";
+import { requestDeleteTicket, requestGetTicket, setTickets, ticketState } from "./ticketSlice";
+import { Ticket } from "../../models/ticket";
 
 const cx = classNames.bind(styles);
 
 interface DataType {
   key: string;
-  nameFilm: string;
-  startTime: number;
-  endTime: number;
-  nSeat: number;
-  value: Schedule;
+  filmName: string;
+  userName: string;
+  showTime: string;
+  seat: number[];
+  value: Ticket;
+  price: number;
 }
 
 const Schedules = () => {
   const [form] = useForm();
   const dispatch = useAppDispatch();
-  const navigate = useNavigate()
 
   const ticketReducer = useAppSelector(ticketState)
   const tickets = ticketReducer.tickets;
@@ -44,8 +36,8 @@ const Schedules = () => {
   const filmReducer = useAppSelector(filmState)
   const films = filmReducer.films;
   const [filmId, setFilmId] = useState<string>();
-
-  // const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filterDate, setFilterDate] = useState<any>();
+  
   const [datas, setDatas] = useState<DataType[]>([]);
   // const [isEdit, setIsEdit] = useState<boolean>(false);
   // const [valueEdit, setValueEdit] = useState<Schedule | undefined>();
@@ -56,21 +48,38 @@ const Schedules = () => {
   //   setIsEdit(false);
   // };
 
+  console.log(tickets);
+  
+
+  useEffect(() => {
+    if(filterDate) {
+     const dateFilter = tickets.filter((e: Ticket) => moment(e.scheduleInfo?.showDate).format("DD/MM/YYYY") === filterDate.format("DD/MM/YYYY"))
+     dispatch(setTickets(dateFilter))
+    }else{
+      if (filmId) {
+        loadAllTicket(undefined, undefined, filmId)
+      } else {
+        loadAllTicket()
+      }
+    }
+  }, [filterDate]);
+  
   useEffect(() => {
     loadAllFilms();
   }, []);
 
   useEffect(() => {
-    // if (filmId) {
-    //   loadAllSchedules(100, 0, filmId)
-    // } else {
+    setFilterDate(null)
+    if (filmId) {
+      loadAllTicket(undefined, undefined, filmId)
+    } else {
       loadAllTicket()
-    // }
+    }
   }, [filmId]);
 
-  // useEffect(() => {
-  //   setDatas(schedules?.map(o => convertDataToTable(o)))
-  // }, [schedules])
+  useEffect(() => {
+    setDatas(tickets?.map(o => convertDataToTable(o)))
+  }, [tickets])
 
   const loadAllTicket = async (limit?: number, skip?: number, filmId?: string, scheduleId?: string) => {
     try {
@@ -98,7 +107,6 @@ const Schedules = () => {
     }
   };
 
-
   // useEffect(() => {
   //   if (valueEdit) {
   //     const { nSeat, filmId, showTime, startTime, endTime } = valueEdit;
@@ -106,16 +114,17 @@ const Schedules = () => {
   //   }
   // }, [valueEdit]);
 
-  // const convertDataToTable = (value: Schedule) => {
-  //   return {
-  //     key: `${value?.id || Math.random()}`,
-  //     nameFilm: `${value?.filmInfo?.name}`,
-  //     nSeat: value?.nSeat,
-  //     startTime: value?.startTime,
-  //     endTime: value?.endTime,
-  //     value: value,
-  //   };
-  // };
+  const convertDataToTable = (value: Ticket) => {
+    return {
+      key: `${value?.id || Date.now()}`,
+      filmName: `${value?.filmInfo?.name}`,
+      userName: `${value?.userInfo?.name}`,
+      seat: value?.seat,
+      showTime: `${moment(value?.scheduleInfo?.showDate).format("DD/MM/YYYY")} | ${value.showTime}`,
+      price: value?.price,
+      value: value,
+    };
+  };
 
   // const handleCancel = () => {
   //   setIsModalOpen(false);
@@ -123,34 +132,29 @@ const Schedules = () => {
   //   form.resetFields();
   // };
 
-  // const handleDelete = async (value: Film) => {
-  //   try {
-  //     const data = await dispatch(
-  //       requestUpdateFilm({
-  //         ...value,
-  //         status: AppConfig.STATUS_DELETED,
-  //       })
-  //     );
-  //     unwrapResult(data);
-  //     // dispatch(
-  //     //   requestLoadFilms({})
-  //     // );
-  //     if (statusFilm !== -2) {
-  //       loadAllFilms(100, 0, statusFilm);
-  //     } else {
-  //       loadAllFilms();
-  //     }
-  //     notification.success({
-  //       message: "Xoá thành công",
-  //       duration: 1.5,
-  //     });
-  //   } catch (error) {
-  //     notification.error({
-  //       message: "cập nhật không được",
-  //       duration: 1.5,
-  //     });
-  //   }
-  // };
+  const handleDelete = async (ticketId: any) => {
+    try {
+      const data = await dispatch(
+        requestDeleteTicket(ticketId)
+      );
+      unwrapResult(data);
+      if (filmId) {
+        loadAllTicket(undefined, undefined, filmId);
+      } else {
+        loadAllTicket();
+      }
+
+      notification.success({
+        message: "Xoá thành công",
+        duration: 1.5,
+      });
+    } catch (error) {
+      notification.error({
+        message: "cập nhật không được",
+        duration: 1.5,
+      });
+    }
+  };
 
   // const handleOk = () => {
   //   form.validateFields().then(async (value) => {
@@ -164,7 +168,6 @@ const Schedules = () => {
   //       startTime: moment(startTimeString, 'DD/MM/YYYY HH:mm').valueOf(),
   //       endTime: moment(endTimeString, 'DD/MM/YYYY HH:mm').valueOf()
   //     }
-
   //     try {
   //       const results = await dispatch(
   //         requestUpdateSchedule({
@@ -174,12 +177,6 @@ const Schedules = () => {
   //         })
   //       );
   //       const res = unwrapResult(results);
-  //       // const res = await apiUpdateSchedule({
-  //       //           id: valueEdit?.id,
-  //       //     ...valueEdit,
-  //       //     ...infoSchedule
-  //       // })
-  //       // console.log({res: res.data});
   //       if(res.status === 0) {
   //         notification.success({
   //           message: isEdit ? "Cập nhật thành công" : "Tạo thành công",
@@ -216,27 +213,27 @@ const Schedules = () => {
     },
     {
       title: "Tên Phim",
-      dataIndex: "nameFilm",
-      key: "nameFilm",
+      dataIndex: "filmName",
+      key: "filmName",
       align: "center",
       render: (text) => <span>{text}</span>,
     },
     {
-      title: "Id Người đặt",
-      dataIndex: "userId",
-      key: "userId",
+      title: "Khách hàng",
+      dataIndex: "userName",
+      key: "userName",
       align: "center",
       render: (text) => <span>{text}</span>,
     },
     {
       title: "Thời gian chiếu",
-      key: "startTime",
-      dataIndex: "startTime",
+      key: "showTime",
+      dataIndex: "showTime",
       align: "center",
       render: (text: number) => (
         <>
           <Tag>
-            {moment(text).format("DD/MM/YYYY HH:mm")}
+            {text}
           </Tag>
         </>
       )
@@ -246,7 +243,7 @@ const Schedules = () => {
       dataIndex: "seat",
       key: "seat",
       align: "center",
-      render: (text) => <span>{text.join(', ')}</span>,
+      render: (text) => <>{text?.map((e: any) => <Tag key={e}>{e}</Tag>)}</>,
     },
     {
       title: "Thành tiền",
@@ -262,7 +259,7 @@ const Schedules = () => {
       key: "action",
       dataIndex: "value",
       align: "center",
-      render: (text: Schedule, record) => (
+      render: (text: Ticket, record) => (
         <Space size="middle">
           <Tooltip placement="top" title="Chỉnh sửa">
             <Button
@@ -276,10 +273,10 @@ const Schedules = () => {
             </Button>
           </Tooltip>
           <Popconfirm
-            placement="topRight"
+            placement="top"
             title="Bạn có chắc bạn muốn xóa mục này không?"
             onConfirm={() => {
-              // handleDelete(text);
+              handleDelete(text.id);
             }}
             okText="Yes"
             cancelText="No"
@@ -297,7 +294,6 @@ const Schedules = () => {
 
   return (
     <div>
-
       <Space size="large">
         {/* <Button type="primary" onClick={openCreateModal}>
           Thêm mới
@@ -305,7 +301,6 @@ const Schedules = () => {
 
         <Space size="small">
           <label style={{ marginLeft: "20px" }}>Chọn Phim:</label>
-
           <Select
             showSearch
             style={{ width: 250, marginLeft: "10px", textAlign: 'center' }}
@@ -324,6 +319,10 @@ const Schedules = () => {
             }}
           />
         </Space>
+        <Space size="small">
+          <label style={{ marginLeft: "20px" }}>Chọn Ngày:</label>
+          <DatePicker format="DD/MM/YYYY" value={filterDate} onChange={(e) => setFilterDate(e)}/>
+        </Space>
       </Space>
 
       <Typography.Title level={3}>Danh sách phim: </Typography.Title>
@@ -332,7 +331,7 @@ const Schedules = () => {
         className={cx("course__table")}
         columns={columns}
         dataSource={datas}
-        // loading={loading}
+        loading={loading}
         pagination={{
           pageSize: 30
         }}

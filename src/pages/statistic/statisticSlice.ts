@@ -51,6 +51,7 @@ export const statisticSlice = createSlice({
                 numRegiter: number,
                 numLogin: number,
                 numTicket: number,
+                numPrice: number,
                 date: string
             }[],
             status: number
@@ -60,7 +61,8 @@ export const statisticSlice = createSlice({
             const datas = action.payload.data.map(o => ({
                 numTicket: o.numTicket,
                 numLogin: o.numLogin,
-                numRegiter: o.numRegiter
+                numRegiter: o.numRegiter,
+                numPrice: o.numPrice,
             }))
 
             const keys = Object.keys(datas[0]);

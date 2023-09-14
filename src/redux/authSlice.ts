@@ -68,7 +68,7 @@ export const authSlice = createSlice({
           userInfo: UserInfo;
         }>
       ) => {
-        state.userInfo = action.payload.userInfo;
+        state.userInfo = new UserInfo(action.payload.userInfo);
         state.loadingCheckLogin = false;
       }
     );

@@ -8,12 +8,14 @@ import { apiGetUserFromToken } from '../api/auth'
 import { authState, requestGetUserFromToken } from '../redux/authSlice';
 import { useAppDispatch, useAppSelector } from '../redux/hook';
 import { UserInfo } from '../models/user';
+import Loading from './loading';
 
 const PrivateRoute = () => {
     const dispatch = useAppDispatch()
     const authStates = useAppSelector(authState)
+    
     useLayoutEffect(() => {
-        if(!authStates.userInfo?._id)
+        if(!authStates.userInfo?.id)
         checkLogin()
     }, [])
 
@@ -35,9 +37,9 @@ const PrivateRoute = () => {
     // If authorized, return an outlet that will render child elements
     // If not, return element that will navigate to login page
     return authStates.loadingCheckLogin ? (
-        <LoadingOutlined size={100} />
+        <Loading />
     ): (
-        authStates.userInfo?._id ? <Outlet /> : <Navigate to="/dang-nhap" />
+        authStates.userInfo?.id ? <Outlet /> : <Navigate to="/dang-nhap" />
     );
 }
 

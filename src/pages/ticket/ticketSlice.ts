@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../../redux/store";
 import { Ticket } from "../../models/ticket";
-import { apiCreateTicket, apiGetAllTicket } from "../../api/ticketApi";
+import { apiCreateTicket, apiDeleteTicket, apiGetAllTicket } from "../../api/ticketApi";
 
 interface TicketState {
   tickets: Ticket[],
@@ -19,15 +19,20 @@ const initialState: TicketState = {
   ticketInfo: null,
   total: 0
 };
-export const requestGetTicket = createAsyncThunk('film/getTicket', async (props: {
+export const requestGetTicket = createAsyncThunk('ticket/getTicket', async (props: {
   filmId?: string, scheduleId?: string, limit?: number, skip?: number
 }) => {
   const res = await apiGetAllTicket(props);
   return res.data
 })
 
-export const requestUpdateTicket = createAsyncThunk('film/updateTicket', async (props: any) => {
+export const requestUpdateTicket = createAsyncThunk('ticket/updateTicket', async (props: any) => {
   const res = await apiCreateTicket(props);
+  return res.data
+})
+
+export const requestDeleteTicket = createAsyncThunk('ticket/deleteTicket', async (ticketId: any) => {
+  const res = await apiDeleteTicket({ticketId});
   return res.data
 })
 
@@ -35,7 +40,11 @@ export const requestUpdateTicket = createAsyncThunk('film/updateTicket', async (
 export const ticketSlice = createSlice({
   name: "ticket",
   initialState,
-  reducers: {},
+  reducers: {
+    setTickets: (state, action: PayloadAction<Ticket[]>) => {
+      state.tickets = action.payload;
+    }
+  },
   extraReducers: (builder) => {
     const actionList: any[] = [requestGetTicket, ];
     actionList.forEach(action => {
@@ -59,18 +68,17 @@ export const ticketSlice = createSlice({
       state.total = action.payload.count;
     })
 
-    // builder.addCase(requestUpdateSchedule.fulfilled, (state, action: PayloadAction<{
-    //   data: Schedule,
-    //   status: number
-    // }>) => {
-    //   state.loading = false;
-    //   state.schedulesInfo = action.payload.data;
-    // })
+    builder.addCase(requestDeleteTicket.fulfilled, (state, action: PayloadAction<{
+      data: Ticket,
+      status: number
+    }>) => {
+      state.loading = false;
+    })
 
   },
 });
 
-export const { } = ticketSlice.actions;
+export const { setTickets } = ticketSlice.actions;
 
 export const ticketState = (state: RootState) => state.ticket;
 

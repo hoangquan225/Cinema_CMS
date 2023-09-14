@@ -1,5 +1,5 @@
 import { Card, Col, message, notification, Row, Space, Statistic, Typography } from "antd";
-import { Bar } from 'react-chartjs-2';
+import { Bar, Line } from 'react-chartjs-2';
 import classNames from "classnames/bind";
 import styles from "./statistic.module.scss"
 import {
@@ -21,8 +21,9 @@ import DatePicker from "../../components/DatePicker";
 import 'moment/locale/vi';
 import {BiUserCheck} from 'react-icons/bi'
 import {ImAccessibility} from 'react-icons/im'
-import {MdFeedback} from 'react-icons/md'
-import { CreditCardOutlined } from "@ant-design/icons";
+import {TbPigMoney} from 'react-icons/tb'
+import {BsTicketPerforatedFill} from 'react-icons/bs'
+
 
 const cx = classNames.bind(styles);
 
@@ -50,6 +51,14 @@ const datasetLabel = {
   }
 }
 
+
+const datasetLabel2 = {
+  ['numPrice']: {
+    label: 'Tổng doanh thu',
+    color: '#F44336'
+  }
+}
+
 const StatisticPage = () => {
   const dispatch = useAppDispatch()
   const statisticStates = useAppSelector(statisticState)
@@ -59,6 +68,16 @@ const StatisticPage = () => {
   useEffect(() => {
     handleLoadStatistic(startTime?.startOf('month').valueOf())
   }, [])
+
+  const filteredData = statisticStates.statistics.filter(statistic =>
+    Object.keys(statistic)[0] in datasetLabel
+  );
+
+  const filteredData2 = statisticStates.statistics.filter(statistic =>
+    Object.keys(statistic)[0] in datasetLabel2
+  );
+
+
 
   const handleLoadStatistic = async (startTime?: number, endTime?: number) => {
     try {
@@ -104,7 +123,7 @@ const StatisticPage = () => {
     </Space>
 
     <Row gutter={16}>
-      <Col span={8}>
+      <Col span={6}>
         <Card bordered={false}>
           <Statistic
             title="Lượt đăng kí"
@@ -114,7 +133,7 @@ const StatisticPage = () => {
           />
         </Card>
       </Col>
-      <Col span={8}>
+      <Col span={6}>
         <Card bordered={false}>
           <Statistic
             title="Lượt truy cập"
@@ -124,13 +143,23 @@ const StatisticPage = () => {
           />
         </Card>
       </Col>
-      <Col span={8}>
+      <Col span={6}>
         <Card bordered={false}>
           <Statistic
             title="Lượt đặt vé"
             value={statisticStates.numResult?.numTicket}
             valueStyle={{ color: datasetLabel['numTicket'].color }}
-            prefix={<CreditCardOutlined />}
+            prefix={<BsTicketPerforatedFill />}
+          />
+        </Card>
+      </Col>
+      <Col span={6}>
+        <Card bordered={false}>
+          <Statistic
+            title="Tổng doanh thu"
+            value={statisticStates.numResult?.numPrice}
+            valueStyle={{ color: datasetLabel2['numPrice'].color }}
+            prefix={<TbPigMoney />}
           />
         </Card>
       </Col>
@@ -152,10 +181,35 @@ const StatisticPage = () => {
         }}
         data={{
           labels: statisticStates.rangeMonth,
-          datasets: statisticStates.statistics.map(statistic => ({
+          datasets: filteredData.map(statistic => ({
             label: datasetLabel[Object.keys(statistic)[0] as keyof typeof datasetLabel].label,
             data: Object.values(statistic)[0],
             backgroundColor: datasetLabel[Object.keys(statistic)[0] as keyof typeof datasetLabel].color,
+          }))
+        }}
+      />
+    </div>
+
+    <div style={{ backgroundColor: '#fff', marginTop: 20 }}>
+      <Bar
+        options={{
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top' as const,
+            },
+            title: {
+              display: true,
+              text: 'Thống kê hàng tháng',
+            },
+          },
+        }}
+        data={{
+          labels: statisticStates.rangeMonth,
+          datasets: filteredData2.map(statistic => ({
+            label: datasetLabel2[Object.keys(statistic)[0] as keyof typeof datasetLabel2]?.label,
+            data: Object.values(statistic)[0],
+            backgroundColor: datasetLabel2[Object.keys(statistic)[0] as keyof typeof datasetLabel2]?.color,
           }))
         }}
       />

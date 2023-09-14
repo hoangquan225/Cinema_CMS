@@ -10,6 +10,7 @@ import { authState, requestGetUserFromToken, requestLogin } from "../../redux/au
 import { useAppDispatch, useAppSelector } from "../../redux/hook";
 import { encrypt } from "../../utils/crypto";
 import styles from "./login.module.scss";
+import Loading from "../../components/loading";
 
 const cx = classNames.bind(styles);
 
@@ -27,9 +28,8 @@ const LoginPages = () => {
     try {
       const result = await dispatch(requestGetUserFromToken({ token: cookie || "" }));
       const data = unwrapResult(result);
-      console.log(data.userInfo);
 
-      if (data.userInfo?._id) {
+      if (data.userInfo?.id) {
         navigate("/");
       }
     } catch (error) {
@@ -93,7 +93,7 @@ const LoginPages = () => {
     <>
       <div className={cx("login__over")}>
         {authStates.loadingCheckLogin ? (
-          <LoadingOutlined />
+          <Loading />
         ) : (
           <div className={cx("login__wrapper")}>
             <h2 className={cx("login__title")}>Đăng Nhập</h2>

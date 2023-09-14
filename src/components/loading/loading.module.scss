@@ -1,0 +1,13 @@
+.loading {
+  background-color: #fff;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loading img {
+  display: block;
+  width: 100px;
+}

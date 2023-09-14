@@ -13,12 +13,10 @@ import { useAppDispatch, useAppSelector } from "../../redux/hook";
 import { unwrapResult } from "@reduxjs/toolkit";
 import AppConfig from "../../common/config";
 import dayjs from "dayjs";
-import { apiUpdateStateFilm } from "../../api/filmApi";
 import { useNavigate } from "react-router-dom";
 import { Schedule } from "../../models/schedule";
 import { requestGetSchedule, requestUpdateSchedule, scheduleState } from "./schedulesSlide";
 import { filmState, requestLoadFilms } from "../films/filmsSlide";
-import { apiUpdateSchedule } from "../../api/sheduleApi";
 
 const cx = classNames.bind(styles);
 
@@ -250,13 +248,6 @@ const Schedules = () => {
       render: (text) => <span>{text}</span>,
     },
     {
-      title: "Số lượng đã vé",
-      dataIndex: "nSeat",
-      key: "nSeat",
-      align: "center",
-      render: (text) => <span>{text}</span>,
-    },
-    {
       title: "Hành động",
       key: "action",
       dataIndex: "value",
@@ -335,6 +326,12 @@ const Schedules = () => {
         pagination={{
           pageSize: 30
         }}
+        // onRow={(record, rowIndex) => {
+        //   return {
+        //     // onClick: (event) => {}, // click row
+        //     onMouseEnter: (event) => {}, // mouse enter row
+        //   };
+        // }}
       />
 
       <Modal

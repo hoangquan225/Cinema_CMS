@@ -27,6 +27,7 @@ export default class ENDPONTAPI {
   static GET_SEAT_OF_SCHEDULE_BY_TICKET =
     '/ticket/get-seat-of-schedule-by-ticket';
   static GET_TICKET_BY_USER = '/ticket/get-ticket-by-user';
+  static DELETE_TICKET = '/ticket/delete-ticket';
 
 
   //upload

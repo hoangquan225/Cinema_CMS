@@ -10,6 +10,15 @@ export const apiGetAllTicket = async (params: { filmId?: string, scheduleId?:str
   );
 };
 
+export const apiDeleteTicket = async (params: { ticketId: string }) => {
+  return ApiConfig(
+    ENDPONTAPI.DELETE_TICKET,
+    {
+      params,
+    }
+  );
+};
+
 export const apiCreateTicket = async (payload: any) => {
   return ApiConfig(ENDPONTAPI.CREATE_TICKET, {
     payload,
