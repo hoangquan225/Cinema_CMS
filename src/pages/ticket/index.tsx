@@ -48,9 +48,6 @@ const Schedules = () => {
   //   setIsEdit(false);
   // };
 
-  console.log(tickets);
-  
-
   useEffect(() => {
     if(filterDate) {
      const dateFilter = tickets.filter((e: Ticket) => moment(e.scheduleInfo?.showDate).format("DD/MM/YYYY") === filterDate.format("DD/MM/YYYY"))
@@ -102,7 +99,7 @@ const Schedules = () => {
       unwrapResult(actionResult);
     } catch (error) {
       notification.error({
-        message: "không tải được danh sách phim",
+        message: "không tải được danh sách vé",
       });
     }
   };
@@ -325,7 +322,7 @@ const Schedules = () => {
         </Space>
       </Space>
 
-      <Typography.Title level={3}>Danh sách phim: </Typography.Title>
+      <Typography.Title level={3}>Danh sách vé: </Typography.Title>
 
       <Table
         className={cx("course__table")}

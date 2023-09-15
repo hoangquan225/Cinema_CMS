@@ -15,7 +15,7 @@ import AppConfig from "../../common/config";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
 import { Schedule } from "../../models/schedule";
-import { requestGetSchedule, requestUpdateSchedule, scheduleState } from "./schedulesSlide";
+import { requestDeleteSchedule, requestGetSchedule, requestUpdateSchedule, scheduleState } from "./schedulesSlide";
 import { filmState, requestLoadFilms } from "../films/filmsSlide";
 
 const cx = classNames.bind(styles);
@@ -72,7 +72,7 @@ const Schedules = () => {
   const loadAllSchedules = async (limit?: number, skip?: number, filmId?: string) => {
     try {
       const actionResult = await dispatch(
-        requestGetSchedule({ limit: limit || 100, skip: skip || 0, filmId: filmId })
+        requestGetSchedule({ limit: limit || 100, skip: skip || 0, filmId: filmId, isAll: true })
       );
       unwrapResult(actionResult);
     } catch (error) {
@@ -90,7 +90,7 @@ const Schedules = () => {
       unwrapResult(actionResult);
     } catch (error) {
       notification.error({
-        message: "không tải được danh sách phim",
+        message: "không tải được danh sách lịch",
       });
     }
   };
@@ -120,34 +120,30 @@ const Schedules = () => {
     form.resetFields();
   };
 
-  // const handleDelete = async (value: Film) => {
-  //   try {
-  //     const data = await dispatch(
-  //       requestUpdateFilm({
-  //         ...value,
-  //         status: AppConfig.STATUS_DELETED,
-  //       })
-  //     );
-  //     unwrapResult(data);
-  //     // dispatch(
-  //     //   requestLoadFilms({})
-  //     // );
-  //     if (statusFilm !== -2) {
-  //       loadAllFilms(100, 0, statusFilm);
-  //     } else {
-  //       loadAllFilms();
-  //     }
-  //     notification.success({
-  //       message: "Xoá thành công",
-  //       duration: 1.5,
-  //     });
-  //   } catch (error) {
-  //     notification.error({
-  //       message: "cập nhật không được",
-  //       duration: 1.5,
-  //     });
-  //   }
-  // };
+  const handleDelete = async (scheduleId: any) => {
+    try {
+      const data = await dispatch(
+        requestDeleteSchedule(scheduleId)
+      );
+      unwrapResult(data);
+
+      if (filmId) {
+        loadAllSchedules(100, 0, filmId)
+      } else {
+        loadAllSchedules()
+      }
+
+      notification.success({
+        message: "Xoá thành công",
+        duration: 1.5,
+      });
+    } catch (error) {
+      notification.error({
+        message: "cập nhật không được",
+        duration: 1.5,
+      });
+    }
+  };
 
   const handleOk = () => {
     form.validateFields().then(async (value) => {
@@ -269,7 +265,7 @@ const Schedules = () => {
             placement="topRight"
             title="Bạn có chắc bạn muốn xóa mục này không?"
             onConfirm={() => {
-              // handleDelete(text);
+              handleDelete(text.id);
             }}
             okText="Yes"
             cancelText="No"
@@ -316,7 +312,7 @@ const Schedules = () => {
         </Space>
       </Space>
 
-      <Typography.Title level={3}>Danh sách phim: </Typography.Title>
+      <Typography.Title level={3}>Danh sách lịch chiếu: </Typography.Title>
 
       <Table
         className={cx("course__table")}

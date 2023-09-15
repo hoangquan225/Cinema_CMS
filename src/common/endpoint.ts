@@ -14,7 +14,9 @@ export default class ENDPONTAPI {
 
   //User
   static UPDATE_USER = '/user/update-user';
+  static UPDATE_STATUS_USER = '/user/update-status-user';
   static GET_USER_BY_ID = '/user/get-user-by-id';
+  static GET_ALL_USER = '/user/get-all-user';
   static CHANGE_PASSWORD = '/user/change-password';
   static GET_USER_FROM_TOKEN = '/user/get-user-from-token';
   static FORGOT_PASSWORD = '/user/forgot-password';
@@ -29,7 +31,6 @@ export default class ENDPONTAPI {
   static GET_TICKET_BY_USER = '/ticket/get-ticket-by-user';
   static DELETE_TICKET = '/ticket/delete-ticket';
 
-
   //upload
   static UPLOAD = '/upload';
 
@@ -39,4 +40,5 @@ export default class ENDPONTAPI {
   //schedule
   static UPDATE_SCHEDULE = '/schedule/update-schedule'
   static GET_SCHEDULE = '/schedule/get-schedule'
+  static DELETE_SCHEDULE = '/schedule/delete-schedule'
 }

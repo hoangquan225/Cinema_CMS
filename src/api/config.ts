@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from "axios";
+import Cookies from "js-cookie";
 
 export const PREFIX_API = process.env.REACT_APP_PREFIX_API;
 export const ENDPOINT_LOCAL = process.env.REACT_APP_ENDPOINT;
@@ -8,6 +9,11 @@ axiosInstance.defaults.baseURL = `${ENDPOINT_LOCAL}/${PREFIX_API}`;
 axiosInstance.defaults.withCredentials = true;
 axiosInstance.defaults.timeout = 20000;
 axiosInstance.defaults.headers["Content-Type"] = "application/json";
+
+const accessToken = Cookies.get("tokenAdmin");
+if (accessToken) {
+  axiosInstance.defaults.headers["Authorization"] = `Bearer ${accessToken}`;
+}
 
 export const ApiConfig = async (
   url: string,
@@ -23,7 +29,7 @@ export const ApiConfig = async (
     url,
     method,
     data: data?.payload,
-    params: data?.params,
+    params: data?.params
   };
   if (apiPrefix !== PREFIX_API)
     config.baseURL = `${ENDPOINT_LOCAL}/${apiPrefix}`;
