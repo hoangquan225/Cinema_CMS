@@ -51,4 +51,11 @@ export default class AppConfig {
     DELETED: -1,
     NORMAL: 0,
   });
+
+  static ProvinceCode = [
+    { code: "HNI", name: "Hà Nội" },
+    { code: "HY", name: "Hưng Yên" },
+    { code: "HP", name: "Hải Phòng" },
+    { code: "HCM", name: "Hồ Chí Minh" },
+  ]
 }

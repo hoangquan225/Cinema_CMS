@@ -41,4 +41,10 @@ export default class ENDPONTAPI {
   static UPDATE_SCHEDULE = '/schedule/update-schedule'
   static GET_SCHEDULE = '/schedule/get-schedule'
   static DELETE_SCHEDULE = '/schedule/delete-schedule'
+
+  //theater
+  static UPDATE_THEATER = '/theater/update-theater'
+  static GET_THEATER = '/theater/get-theater'
+  static DELETE_THEATER = '/theater/delete-theater'
+  static GET_THEATER_BY_ID = '/theater/get-theater-by-id'
 }

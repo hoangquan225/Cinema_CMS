@@ -1,8 +1,7 @@
 import ENDPONTAPI from "../common/endpoint";
-import { Schedule } from "../models/schedule";
 import { ApiConfig } from "./config";
 
-export const apiGetSchedule = async (params: { filmId?: string, limit?: number, skip?: number, isAll?: boolean }) => {
+export const apiGetSchedule = async (params: { filmId?: string, limit?: number, skip?: number, isAll?: boolean, theater?: number }) => {
   return ApiConfig(
     ENDPONTAPI.GET_SCHEDULE,
     {

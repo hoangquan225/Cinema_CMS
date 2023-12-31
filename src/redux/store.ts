@@ -5,6 +5,7 @@ import statisticReducer from "../pages/statistic/statisticSlice";
 import scheduleReducer from "../pages/schedule/schedulesSlide";
 import ticketReducer from "../pages/ticket/ticketSlice";
 import userReducer from "../pages/user/usersSlide";
+import theaterReducer from "../pages/theater/theaterSlide";
 
 export const store = configureStore({
     reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
         schedule: scheduleReducer,
         ticket: ticketReducer,
         user: userReducer,
+        theater: theaterReducer,
     },
     middleware: (getDefaultMiddle) => getDefaultMiddle({ serializableCheck: false }),
 });

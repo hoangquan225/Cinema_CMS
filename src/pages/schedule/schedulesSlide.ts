@@ -21,7 +21,7 @@ const initialState: ScheduleState = {
 };
 
 export const requestGetSchedule = createAsyncThunk('film/getSchedule', async (props: {
-  filmId?: string, limit?: number, skip?: number, isAll?: boolean
+  filmId?: string, limit?: number, skip?: number, isAll?: boolean, theater?: number
 }) => {
   const res = await apiGetSchedule(props);
   return res.data

@@ -1,22 +1,19 @@
-import { Button, Checkbox, Col, DatePicker, Form, Image, Input, Modal, Popconfirm, Row, Select, Space, Tag, TimePicker, Tooltip, Typography, notification } from "antd";
-import { useForm } from "antd/es/form/Form";
-import TextArea from "antd/es/input/TextArea";
-import UploadImg from "../../components/UploadImg";
-import { useState, useEffect } from "react";
-import { Film } from "../../models/film";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { unwrapResult } from "@reduxjs/toolkit";
+import { Button, Checkbox, DatePicker, Form, Input, Modal, Popconfirm, Select, Space, Tag, Tooltip, Typography, notification } from "antd";
+import { useForm } from "antd/es/form/Form";
 import Table, { ColumnsType } from "antd/es/table";
 import classNames from "classnames/bind";
-import styles from "./schedules.module.scss";
-import moment from "moment";
-import { useAppDispatch, useAppSelector } from "../../redux/hook";
-import { unwrapResult } from "@reduxjs/toolkit";
-import AppConfig from "../../common/config";
 import dayjs from "dayjs";
+import moment from "moment";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Schedule } from "../../models/schedule";
-import { requestDeleteSchedule, requestGetSchedule, requestUpdateSchedule, scheduleState } from "./schedulesSlide";
+import { useAppDispatch, useAppSelector } from "../../redux/hook";
 import { filmState, requestLoadFilms } from "../films/filmsSlide";
+import { requestLoadTheaters, theaterState } from "../theater/theaterSlide";
+import styles from "./schedules.module.scss";
+import { requestDeleteSchedule, requestGetSchedule, requestUpdateSchedule, scheduleState } from "./schedulesSlide";
 
 const cx = classNames.bind(styles);
 
@@ -26,13 +23,13 @@ interface DataType {
   showDate: number;
   showTime: [string];
   nSeat: number;
+  theater: number;
   value: Schedule;
 }
 
 const Schedules = () => {
   const [form] = useForm();
   const dispatch = useAppDispatch();
-  const navigate = useNavigate()
 
   const scheduleReducer = useAppSelector(scheduleState)
   const schedules = scheduleReducer.schedules;
@@ -41,7 +38,11 @@ const Schedules = () => {
   const filmReducer = useAppSelector(filmState)
   const films = filmReducer.films;
 
+  const theaterReducer = useAppSelector(theaterState)
+  const theaters = theaterReducer.theaters;
+
   const [filmId, setFilmId] = useState<string>();
+  const [typeTheater, setTypeTheater] = useState<number>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [datas, setDatas] = useState<DataType[]>([]);
   const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -55,24 +56,25 @@ const Schedules = () => {
 
   useEffect(() => {
     loadAllFilms();
+    loadTheaters();
   }, []);
 
   useEffect(() => {
-    if (filmId) {
-      loadAllSchedules(100, 0, filmId)
+    if (filmId || typeTheater) {
+      loadAllSchedules(100, 0, filmId, typeTheater)
     } else {
       loadAllSchedules()
     }
-  }, [filmId]);
+  }, [filmId, typeTheater]);
 
   useEffect(() => {
     setDatas(schedules?.map(o => convertDataToTable(o)))
   }, [schedules])
 
-  const loadAllSchedules = async (limit?: number, skip?: number, filmId?: string) => {
+  const loadAllSchedules = async (limit?: number, skip?: number, filmId?: string, theater?: number) => {
     try {
       const actionResult = await dispatch(
-        requestGetSchedule({ limit: limit || 100, skip: skip || 0, filmId: filmId, isAll: true })
+        requestGetSchedule({ limit: limit || 100, skip: skip || 0, filmId: filmId, isAll: true, theater: theater })
       );
       unwrapResult(actionResult);
     } catch (error) {
@@ -95,6 +97,19 @@ const Schedules = () => {
     }
   };
 
+  const loadTheaters = async () => {
+    try {
+      const actionResult = await dispatch(
+        requestLoadTheaters({})
+      );
+      unwrapResult(actionResult);
+    } catch (error) {
+      notification.error({
+        message: "không tải được danh sách rạp chiếu",
+      });
+    }
+  };
+
 
   useEffect(() => {
     if (valueEdit) {
@@ -110,6 +125,7 @@ const Schedules = () => {
       nSeat: value?.nSeat,
       showDate: value?.showDate,
       showTime: value?.showTime,
+      theater: value?.theater,
       value: value,
     };
   };
@@ -147,7 +163,7 @@ const Schedules = () => {
 
   const handleOk = () => {
     form.validateFields().then(async (value) => {
-      const { startEndTime, showTime, nSeat, showDate } = value
+      const { startEndTime, showTime, nSeat, showDate, theater } = value
       // const startTimeString: string = `${showTime.format("DD/MM/YYYY")} ${startEndTime[0].format("HH:mm")}`
       // const endTimeString: string = `${showTime.format("DD/MM/YYYY")} ${startEndTime[1].format("HH:mm")}`
       // const infoSchedule = {
@@ -163,6 +179,7 @@ const Schedules = () => {
         nSeat: nSeat,
         showTime: showTime,
         showDate: showDate.valueOf(),
+        theater: theater
       }
 
       try {
@@ -244,6 +261,13 @@ const Schedules = () => {
       render: (text) => <span>{text}</span>,
     },
     {
+      title: "Rạp chiếu",
+      dataIndex: "theater",
+      key: "theater",
+      align: "center",
+      render: (text) => <span>{theaters.map(e => e.type === text && <>{e.name}</>)}</span>,
+    },
+    {
       title: "Hành động",
       key: "action",
       dataIndex: "value",
@@ -291,7 +315,6 @@ const Schedules = () => {
 
         <Space size="small">
           <label style={{ marginLeft: "20px" }}>Chọn Phim:</label>
-
           <Select
             showSearch
             style={{ width: 250, marginLeft: "10px" }}
@@ -307,6 +330,23 @@ const Schedules = () => {
             }))]}
             onChange={(value) => {
               setFilmId(value);
+            }}
+          />
+        </Space>
+
+        <Space size="small">
+          <label style={{ marginLeft: "20px" }}>Chọn Rạp:</label>
+          <Select
+            showSearch
+            style={{ width: 250, marginLeft: "10px" }}
+            placeholder={"Search to Select"}
+          
+            options={[{ value: 0, label: "--- All ---" }, ...theaters?.map((data) => ({
+              value: data.type,
+              label: data.name,
+            }))]}
+            onChange={(value) => {
+              setTypeTheater(value);
             }}
           />
         </Space>
@@ -445,9 +485,30 @@ const Schedules = () => {
                 message: "Vui lòng nhập trường này!",
               },
             ]}
-
           >
             <Input type="number" />
+          </Form.Item>
+
+          <Form.Item
+            name="theater"
+            label="Chọn rạp"
+            rules={[
+              {
+                required: true,
+                message: "Vui lòng nhập trường này!",
+              },
+            ]}
+          >
+            <Select
+                showSearch
+                style={{ width: "100%" }}
+                placeholder={"Search to Select Theater"}
+                
+                options={theaters?.map((data) => ({
+                  value: data.type,
+                  label: data.name,
+                }))}
+              />
           </Form.Item>
         </Form>
       </Modal>

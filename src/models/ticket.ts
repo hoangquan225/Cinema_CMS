@@ -18,6 +18,7 @@ class Ticket {
   price: number;
   paid: boolean;
   createdAt: number;
+  theater: number; //1: Thanh xuan, 2: Long Bien, 3: Royal city, 4: Time City, 5: Ha Dong, 6: Giai Phong
 
   constructor(args?: any) {
     if (!args) {
@@ -32,7 +33,7 @@ class Ticket {
     this.filmInfo = isObject(args.filmId) ? new Film(args.filmId) : (args?.filmInfo ?? undefined);
     this.scheduleId = isObject(args.scheduleId) ? new Schedule(args.scheduleId)?.id : (args?.scheduleId ?? undefined);
     this.scheduleInfo = isObject(args.scheduleId) ? new Schedule(args.scheduleId) : (args?.scheduleInfo ?? undefined);
-    
+    this.theater = args?.theater ?? 0;
     this.seat = args?.seat ?? [];
     this.showTime = args?.showTime ?? '';
     this.showDate = args?.showDate ?? 0;

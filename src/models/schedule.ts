@@ -12,6 +12,7 @@ class Schedule {
     endTime: number;
     nSeat: number;
     createdAt: number;
+    theater: number; //1: Thanh xuan, 2: Long Bien, 3: Royal city, 4: Time City, 5: Ha Dong, 6: Giai Phong
 
     constructor(args?: any) {
         if (!args) {
@@ -27,6 +28,7 @@ class Schedule {
         this.endTime = args?.endTime ?? 0;
         this.nSeat = args?.nSeat ?? 0;
         this.createdAt = args?.createdAt ?? 0;
+        this.theater = args?.theater ?? null;
     }
 }
 
