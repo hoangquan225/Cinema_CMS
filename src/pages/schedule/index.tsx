@@ -14,6 +14,7 @@ import { filmState, requestLoadFilms } from "../films/filmsSlide";
 import { requestLoadTheaters, theaterState } from "../theater/theaterSlide";
 import styles from "./schedules.module.scss";
 import { requestDeleteSchedule, requestGetSchedule, requestUpdateSchedule, scheduleState } from "./schedulesSlide";
+import { apiGetTheaters } from "../../api/theaterApi";
 
 const cx = classNames.bind(styles);
 
@@ -24,6 +25,7 @@ interface DataType {
   showTime: [string];
   nSeat: number;
   theater: number;
+  roomNum: number;
   value: Schedule;
 }
 
@@ -43,6 +45,8 @@ const Schedules = () => {
 
   const [filmId, setFilmId] = useState<string>();
   const [typeTheater, setTypeTheater] = useState<number>();
+  const [theaterId, setTheaterId] = useState<number>();
+  const [nRoom, setNRoom] = useState<number>(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [datas, setDatas] = useState<DataType[]>([]);
   const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -66,6 +70,11 @@ const Schedules = () => {
       loadAllSchedules()
     }
   }, [filmId, typeTheater]);
+
+  useEffect(() => {
+    if(theaterId)
+      loadTheaterByType(theaterId)
+  }, [theaterId]);
 
   useEffect(() => {
     setDatas(schedules?.map(o => convertDataToTable(o)))
@@ -110,11 +119,22 @@ const Schedules = () => {
     }
   };
 
+  const loadTheaterByType = async (type: number) => {
+    try {
+      const res = await apiGetTheaters({type});
+      setNRoom(res.data.data[0].nRoom)
+    } catch (error) {
+      notification.error({
+        message: "không tải được danh sách rạp chiếu 1",
+      });
+    }
+  };
+
 
   useEffect(() => {
     if (valueEdit) {
-      const { nSeat, filmId, showDate, startTime, endTime, showTime } = valueEdit;
-      form.setFieldsValue({ nSeat, startEndTime: [dayjs(startTime), dayjs(endTime)], showDate: dayjs(showDate),showTime, filmId });
+      const { nSeat, filmId, showDate, startTime, endTime, showTime, theater, roomNum } = valueEdit;
+      form.setFieldsValue({ nSeat, startEndTime: [dayjs(startTime), dayjs(endTime)], showDate: dayjs(showDate),showTime, filmId, theater, roomNum });
     }
   }, [valueEdit]);
 
@@ -126,6 +146,7 @@ const Schedules = () => {
       showDate: value?.showDate,
       showTime: value?.showTime,
       theater: value?.theater,
+      roomNum: value?.roomNum,
       value: value,
     };
   };
@@ -133,6 +154,7 @@ const Schedules = () => {
   const handleCancel = () => {
     setIsModalOpen(false);
     setValueEdit(undefined);
+    setNRoom(0)
     form.resetFields();
   };
 
@@ -163,7 +185,7 @@ const Schedules = () => {
 
   const handleOk = () => {
     form.validateFields().then(async (value) => {
-      const { startEndTime, showTime, nSeat, showDate, theater } = value
+      const { startEndTime, showTime, nSeat, showDate, theater, roomNum } = value
       // const startTimeString: string = `${showTime.format("DD/MM/YYYY")} ${startEndTime[0].format("HH:mm")}`
       // const endTimeString: string = `${showTime.format("DD/MM/YYYY")} ${startEndTime[1].format("HH:mm")}`
       // const infoSchedule = {
@@ -179,7 +201,8 @@ const Schedules = () => {
         nSeat: nSeat,
         showTime: showTime,
         showDate: showDate.valueOf(),
-        theater: theater
+        theater: theater,
+        roomNum: roomNum,
       }
 
       try {
@@ -265,7 +288,14 @@ const Schedules = () => {
       dataIndex: "theater",
       key: "theater",
       align: "center",
-      render: (text) => <span>{theaters.map(e => e.type === text && <>{e.name}</>)}</span>,
+      render: (text) => <span>{theaters.map(e => e.type === text && <div key={e.id}>{e.name}</div>)}</span>,
+    },
+    {
+      title: "Phòng",
+      dataIndex: "roomNum",
+      key: "roomNum",
+      align: "center",
+      render: (text) => <span>{text}</span>,
     },
     {
       title: "Hành động",
@@ -280,6 +310,7 @@ const Schedules = () => {
                 setIsModalOpen(true);
                 setValueEdit(text);
                 setIsEdit(true);
+                loadTheaterByType(text.theater)
               }}
             >
               <EditOutlined />
@@ -503,11 +534,37 @@ const Schedules = () => {
                 showSearch
                 style={{ width: "100%" }}
                 placeholder={"Search to Select Theater"}
-                
                 options={theaters?.map((data) => ({
                   value: data.type,
                   label: data.name,
                 }))}
+                onChange={(value) => {
+                  setTheaterId(value);
+                }}
+              />
+          </Form.Item>
+
+          <Form.Item
+            name="roomNum"
+            label="Chọn Phòng"
+            rules={[
+              {
+                required: true,
+                message: "Vui lòng nhập trường này!",
+              },
+            ]}
+          >
+            <Select
+                showSearch
+                style={{ width: "100%" }}
+                placeholder={"Search to Select Theater"}
+                options={Array.from({ length: nRoom }, (_, index) => ({
+                  value: index + 1,
+                  label: (index + 1).toString(),
+                }))}
+                onChange={(value) => {
+                  setTheaterId(value);
+                }}
               />
           </Form.Item>
         </Form>
