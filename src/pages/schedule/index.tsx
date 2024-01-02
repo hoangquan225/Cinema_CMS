@@ -155,6 +155,7 @@ const Schedules = () => {
     setIsModalOpen(false);
     setValueEdit(undefined);
     setNRoom(0)
+    setTheaterId(undefined)
     form.resetFields();
   };
 
@@ -311,6 +312,7 @@ const Schedules = () => {
                 setValueEdit(text);
                 setIsEdit(true);
                 loadTheaterByType(text.theater)
+                // setTheaterId()
               }}
             >
               <EditOutlined />
